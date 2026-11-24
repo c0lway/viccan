@@ -1,0 +1,2000 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VíCCAN | Entrenamiento Canino en Casa</title>
+    <!-- Carga de Tailwind CSS para diseño responsivo y moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de fuente Inter desde Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Firebase SDK (opcional: solo se activa si configuras FIREBASE_CONFIG abajo) -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.25s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Notificación flotante (Toast) para mensajes sin usar alert() -->
+    <div id="toast-container" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 opacity-0 translate-y-4 w-11/12 max-w-md">
+        <div id="toast-message" class="bg-stone-900 text-white px-5 py-3.5 rounded-2xl shadow-xl flex items-center justify-center gap-3 text-sm font-medium text-center">
+            <span id="toast-icon">🐾</span>
+            <span id="toast-text">Mensaje</span>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- PANTALLA DE INICIO DE SESIÓN (ALUMNOS Y ADMINISTRADOR)    -->
+    <!-- ========================================================= -->
+    <section id="auth-screen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-emerald-900 via-teal-800 to-stone-900">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden animate-fade-in">
+            <!-- Cabecera del login -->
+            <div class="bg-gradient-to-br from-emerald-700 to-teal-800 px-6 py-7 text-white text-center relative">
+                <div class="flex justify-center mb-3">
+                    <img src="ViCCAN_Logo.jpeg" alt="Logo VíCCAN" onerror="this.style.display='none'; document.getElementById('logo-fallback').classList.remove('hidden');" class="w-20 h-20 rounded-2xl object-cover border-2 border-white/30 shadow-lg bg-white">
+                    <div id="logo-fallback" class="hidden w-16 h-16 rounded-2xl bg-white/15 border border-white/30 flex items-center justify-center text-3xl">
+                        🐾
+                    </div>
+                </div>
+                <h1 class="text-2xl font-extrabold tracking-tight">VíCCAN</h1>
+                <p class="text-emerald-100 text-sm mt-1">Entrenamiento Canino en Casa</p>
+                <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/15 text-emerald-50">
+                    <span id="auth-storage-dot" class="w-2 h-2 rounded-full bg-amber-300"></span>
+                    <span id="auth-storage-label">Modo Local</span>
+                </div>
+            </div>
+
+            <!-- Pestañas de acceso -->
+            <div class="grid grid-cols-3 border-b border-stone-200 bg-stone-50 text-xs sm:text-sm font-semibold">
+                <button type="button" onclick="switchAuthTab('login')" id="tab-login" class="py-3.5 px-2 text-teal-700 border-b-2 border-teal-700 bg-white transition">
+                    Ingresar
+                </button>
+                <button type="button" onclick="switchAuthTab('register')" id="tab-register" class="py-3.5 px-2 text-stone-500 hover:text-stone-800 border-b-2 border-transparent transition">
+                    Soy nuevo
+                </button>
+                <button type="button" onclick="switchAuthTab('admin')" id="tab-admin" class="py-3.5 px-2 text-stone-500 hover:text-stone-800 border-b-2 border-transparent transition">
+                    🛡️ Admin
+                </button>
+            </div>
+
+            <!-- Formularios -->
+            <div class="p-6 sm:p-7">
+                <!-- Formulario: Ingresar Alumno -->
+                <form id="form-login" onsubmit="handleStudentLogin(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1.5">Usuario o correo</label>
+                        <input type="text" id="login-identifier" required placeholder="ej. ana@correo.com o ana_max" class="w-full px-4 py-2.5 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1.5">PIN o contraseña</label>
+                        <input type="password" id="login-password" required placeholder="Tu contraseña" class="w-full px-4 py-2.5 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition">
+                    </div>
+                    <button type="submit" id="btn-login-submit" class="w-full bg-teal-600 hover:bg-teal-700 active:scale-[0.99] text-white font-bold py-3 px-4 rounded-xl transition shadow-sm">
+                        Entrar a mi rutina 🐾
+                    </button>
+                    <p class="text-xs text-stone-400 text-center">
+                        ¿Primera vez aquí? Da clic en <strong>"Soy nuevo"</strong> arriba para crear tu cuenta.
+                    </p>
+                </form>
+
+                <!-- Formulario: Registro Alumno -->
+                <form id="form-register" onsubmit="handleStudentRegister(event)" class="space-y-3.5 hidden">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1">Tu nombre</label>
+                            <input type="text" id="reg-student-name" required placeholder="ej. Ana López" class="w-full px-3.5 py-2.5 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1">Tu perro</label>
+                            <input type="text" id="reg-dog-name" required placeholder="ej. Max" class="w-full px-3.5 py-2.5 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1">Usuario o correo</label>
+                        <input type="text" id="reg-identifier" required placeholder="ej. ana@correo.com o ana_max" class="w-full px-3.5 py-2.5 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1">Crea un PIN o contraseña</label>
+                        <input type="password" id="reg-password" required minlength="4" placeholder="Mínimo 4 caracteres" class="w-full px-3.5 py-2.5 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition">
+                    </div>
+                    <button type="submit" id="btn-register-submit" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold py-3 px-4 rounded-xl transition shadow-sm">
+                        Crear cuenta y comenzar 🚀
+                    </button>
+                </form>
+
+                <!-- Formulario: Administrador / Entrenador -->
+                <form id="form-admin" onsubmit="handleAdminLogin(event)" class="space-y-4 hidden">
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900">
+                        <strong>Acceso exclusivo para el entrenador:</strong> revisa los videos enviados por tus alumnos y escribe su retroalimentación.
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1.5">Usuario administrador</label>
+                        <input type="text" id="admin-username" required value="admin" class="w-full px-4 py-2.5 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1.5">Contraseña de entrenador</label>
+                        <input type="password" id="admin-password" required placeholder="••••••••" class="w-full px-4 py-2.5 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition">
+                    </div>
+                    <button type="submit" class="w-full bg-stone-900 hover:bg-stone-800 active:scale-[0.99] text-white font-bold py-3 px-4 rounded-xl transition shadow-sm">
+                        Ingresar como Administrador 🛡️
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- CONTENEDOR PRINCIPAL DE LA APLICACIÓN (POST-LOGIN)        -->
+    <!-- ========================================================= -->
+    <div id="app-shell" class="hidden flex-col min-h-screen">
+
+        <!-- Encabezado principal -->
+        <header class="bg-gradient-to-br from-emerald-700 via-teal-700 to-teal-800 text-white shadow-lg rounded-b-3xl">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 pt-5 pb-8 sm:pb-10">
+                <!-- Barra superior de sesión -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pb-5 mb-5 border-b border-white/15">
+                    <div class="flex items-center gap-3">
+                        <img src="ViCCAN_Logo.jpeg" alt="VíCCAN" onerror="this.style.display='none'" class="w-10 h-10 rounded-xl object-cover border border-white/30 bg-white">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span id="session-badge" class="text-xs sm:text-sm font-bold text-white"></span>
+                                <span id="header-storage-pill" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white/15 text-emerald-50"></span>
+                            </div>
+                            <p id="session-subtext" class="text-xs text-emerald-100/90"></p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <!-- Botón exclusivo de Admin para alternar entre Panel y Vista de Ejercicios -->
+                        <button id="btn-toggle-admin-preview" onclick="toggleAdminViewMode()" class="hidden bg-white/15 hover:bg-white/25 text-white text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl transition">
+                            👁️ Ver ejercicios
+                        </button>
+                        <button onclick="refreshAllData()" title="Actualizar datos" class="bg-white/15 hover:bg-white/25 text-white text-xs sm:text-sm font-semibold px-3 py-2 rounded-xl transition">
+                            🔄
+                        </button>
+                        <button onclick="logout()" class="bg-rose-500/85 hover:bg-rose-600 text-white text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl transition">
+                            Cerrar sesión
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                    <div class="space-y-2">
+                        <div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold text-emerald-50">
+                            <span>🐾</span>
+                            <span id="header-role-pill">VíCCAN • Rutina para días en casa</span>
+                        </div>
+                        <h1 id="header-title" class="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+                            Entrenamiento Canino en Casa
+                        </h1>
+                        <p id="header-desc" class="text-emerald-100 text-sm sm:text-base max-w-xl leading-relaxed">
+                            ¿Hoy no pudieron salir? No importa. Elige 2 o 3 ejercicios, realiza sesiones cortas y divertidas, y pega el enlace de tu video para recibir retroalimentación.
+                        </p>
+                    </div>
+
+                    <!-- Tarjeta de Progreso Rápido (solo visible en vista alumno) -->
+                    <div id="student-progress-card" class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 sm:p-5 w-full md:w-72 shrink-0">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-emerald-100">Tu progreso hoy</span>
+                            <span id="progress-text" class="text-sm font-bold text-white">0 / 10</span>
+                        </div>
+                        <div class="w-full bg-teal-950/50 rounded-full h-3 overflow-hidden mb-3">
+                            <div id="progress-bar" class="bg-amber-400 h-3 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+                        </div>
+                        <button onclick="openSummaryModal()" class="w-full bg-amber-400 hover:bg-amber-300 active:scale-[0.98] text-stone-900 font-bold text-sm py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2 shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                            <span>Preparar reporte para enviar</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ===================================================== -->
+        <!-- VISTA DE ALUMNO                                       -->
+        <!-- ===================================================== -->
+        <main id="student-view" class="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex-1 w-full space-y-6">
+
+            <!-- Sección: Tips para grabar el video + Temporizador de sesión -->
+            <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <!-- Tips de grabación -->
+                <div class="lg:col-span-2 bg-white border border-stone-200 rounded-2xl p-5 shadow-sm">
+                    <div class="flex items-center gap-2.5 mb-3">
+                        <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <h2 class="font-bold text-stone-800 text-base sm:text-lg">¿Cómo grabar y subir tus videos para el entrenador?</h2>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-sm text-stone-600">
+                        <div class="flex items-start gap-2 bg-stone-50 p-2.5 rounded-xl">
+                            <span class="text-emerald-600 font-bold">✓</span>
+                            <span><strong>Duración ideal:</strong> Videos cortos de 30 a 60 segundos por ejercicio.</span>
+                        </div>
+                        <div class="flex items-start gap-2 bg-stone-50 p-2.5 rounded-xl">
+                            <span class="text-emerald-600 font-bold">✓</span>
+                            <span><strong>Encuadre:</strong> Que se vea tu cuerpo (o manos) y a tu perro completo.</span>
+                        </div>
+                        <div class="flex items-start gap-2 bg-stone-50 p-2.5 rounded-xl">
+                            <span class="text-emerald-600 font-bold">✓</span>
+                            <span><strong>Audio claro:</strong> Sin música fuerte para escuchar tu marcador ("¡Bien!" o clicker).</span>
+                        </div>
+                        <div class="flex items-start gap-2 bg-stone-50 p-2.5 rounded-xl">
+                            <span class="text-emerald-600 font-bold">✓</span>
+                            <span><strong>Enlace del video:</strong> Súbelo a Drive, YouTube (Oculto) o iCloud y pega el link en el ejercicio.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Temporizador de Sesión Corta -->
+                <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-teal-700 bg-teal-50 px-2.5 py-1 rounded-lg">Temporizador</span>
+                            <span class="text-xs text-stone-400">Sesiones cortas</span>
+                        </div>
+                        <div class="text-center my-2">
+                            <div id="timer-display" class="text-4xl font-extrabold text-stone-800 tabular-nums tracking-tight">03:00</div>
+                            <p class="text-xs text-stone-500 mt-1">Ideal: 3 a 5 min para mantener su motivación</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2 mt-3">
+                        <div class="flex gap-2 justify-center">
+                            <button onclick="setTimer(180)" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 transition">3 min</button>
+                            <button onclick="setTimer(300)" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 transition">5 min</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <button id="timer-toggle-btn" onclick="toggleTimer()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm py-2.5 px-4 rounded-xl transition">
+                                Iniciar
+                            </button>
+                            <button onclick="resetTimer()" class="bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold text-sm py-2.5 px-3.5 rounded-xl transition" aria-label="Reiniciar temporizador">
+                                ↺
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Barra de Datos del Alumno y Filtros -->
+            <section class="space-y-4">
+                <div class="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                    <div class="text-xs font-semibold text-stone-500 uppercase tracking-wider shrink-0 sm:w-32">
+                        Tus datos:
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
+                        <input type="text" id="student-name" placeholder="Tu nombre (ej. Ana)" oninput="saveProfile()" class="w-full px-3.5 py-2 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition">
+                        <input type="text" id="dog-name" placeholder="Nombre de tu perro (ej. Max)" oninput="saveProfile()" class="w-full px-3.5 py-2 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition">
+                    </div>
+                </div>
+
+                <!-- Botones de Filtro por Categoría -->
+                <div class="flex flex-wrap items-center gap-2" id="category-filters">
+                    <button onclick="filterCategory('Todos')" data-cat="Todos" class="filter-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-teal-700 text-white shadow-sm">
+                        Todos (10)
+                    </button>
+                    <button onclick="filterCategory('Obediencia Básica')" data-cat="Obediencia Básica" class="filter-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-white text-stone-600 border border-stone-200 hover:bg-stone-100">
+                        🎯 Obediencia Básica
+                    </button>
+                    <button onclick="filterCategory('Autocontrol y Calma')" data-cat="Autocontrol y Calma" class="filter-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-white text-stone-600 border border-stone-200 hover:bg-stone-100">
+                        🧘 Autocontrol y Calma
+                    </button>
+                    <button onclick="filterCategory('Olfato y Mente')" data-cat="Olfato y Mente" class="filter-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-white text-stone-600 border border-stone-200 hover:bg-stone-100">
+                        👃 Olfato y Mente
+                    </button>
+                    <button onclick="filterCategory('Trucos y Cuerpo')" data-cat="Trucos y Cuerpo" class="filter-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-white text-stone-600 border border-stone-200 hover:bg-stone-100">
+                        🐾 Trucos y Cuerpo
+                    </button>
+                    <button onclick="filterCategory('Con Retroalimentación')" data-cat="Con Retroalimentación" class="filter-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-white text-stone-600 border border-stone-200 hover:bg-stone-100">
+                        💬 Con comentarios
+                    </button>
+                </div>
+            </section>
+
+            <!-- Cuadrícula de Ejercicios -->
+            <section id="exercises-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <!-- Los ejercicios se renderizan dinámicamente con JavaScript -->
+            </section>
+        </main>
+
+        <!-- ===================================================== -->
+        <!-- VISTA DE ADMINISTRADOR (RETROALIMENTACIÓN DE VIDEOS)  -->
+        <!-- ===================================================== -->
+        <main id="admin-view" class="hidden max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex-1 w-full space-y-6">
+
+            <!-- Tarjetas de Resumen Admin -->
+            <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm">
+                    <p class="text-xs font-bold uppercase tracking-wider text-stone-400">Alumnos</p>
+                    <p id="stat-students" class="text-2xl sm:text-3xl font-extrabold text-stone-800 mt-1">0</p>
+                </div>
+                <div class="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm">
+                    <p class="text-xs font-bold uppercase tracking-wider text-stone-400">Videos enviados</p>
+                    <p id="stat-videos" class="text-2xl sm:text-3xl font-extrabold text-teal-700 mt-1">0</p>
+                </div>
+                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 shadow-sm">
+                    <p class="text-xs font-bold uppercase tracking-wider text-amber-700">Pendientes</p>
+                    <p id="stat-pending" class="text-2xl sm:text-3xl font-extrabold text-amber-800 mt-1">0</p>
+                </div>
+                <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 shadow-sm">
+                    <p class="text-xs font-bold uppercase tracking-wider text-emerald-700">Revisados</p>
+                    <p id="stat-reviewed" class="text-2xl sm:text-3xl font-extrabold text-emerald-800 mt-1">0</p>
+                </div>
+            </section>
+
+            <!-- Navegación interna de Administrador -->
+            <section class="bg-white border border-stone-200 rounded-2xl p-3 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="setAdminSection('videos')" id="admin-nav-videos" class="px-4 py-2 rounded-xl text-sm font-bold bg-stone-900 text-white transition">
+                        🎬 Videos y Retroalimentación
+                    </button>
+                    <button onclick="setAdminSection('students')" id="admin-nav-students" class="px-4 py-2 rounded-xl text-sm font-semibold bg-stone-100 text-stone-700 hover:bg-stone-200 transition">
+                        👥 Alumnos registrados
+                    </button>
+                    <button onclick="setAdminSection('settings')" id="admin-nav-settings" class="px-4 py-2 rounded-xl text-sm font-semibold bg-stone-100 text-stone-700 hover:bg-stone-200 transition">
+                        ⚙️ Nube y Respaldo
+                    </button>
+                </div>
+            </section>
+
+            <!-- Sub-sección 1: Videos y Retroalimentación -->
+            <section id="admin-section-videos" class="space-y-4">
+                <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="setAdminVideoFilter('pending')" data-vfilter="pending" class="admin-vfilter px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-amber-500 text-white transition">
+                            ⏳ Pendientes
+                        </button>
+                        <button onclick="setAdminVideoFilter('all')" data-vfilter="all" class="admin-vfilter px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-100 transition">
+                            Todos los videos
+                        </button>
+                        <button onclick="setAdminVideoFilter('reviewed')" data-vfilter="reviewed" class="admin-vfilter px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-100 transition">
+                            ✅ Ya revisados
+                        </button>
+                    </div>
+                    <input type="text" id="admin-search" oninput="renderAdminVideos()" placeholder="Buscar por alumno, perro o ejercicio..." class="px-4 py-2 text-sm bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 sm:w-72">
+                </div>
+
+                <div id="admin-videos-list" class="space-y-4">
+                    <!-- Tarjetas de videos para retroalimentación -->
+                </div>
+            </section>
+
+            <!-- Sub-sección 2: Alumnos registrados -->
+            <section id="admin-section-students" class="hidden space-y-4">
+                <div id="admin-students-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Lista de alumnos -->
+                </div>
+            </section>
+
+            <!-- Sub-sección 3: Configuración Nube (Firebase) y Respaldo -->
+            <section id="admin-section-settings" class="hidden space-y-5">
+                <div class="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm space-y-4">
+                    <h3 class="text-lg font-extrabold text-stone-800">☁️ Sincronización entre dispositivos (GitHub Pages + Firebase)</h3>
+                    <p class="text-sm text-stone-600 leading-relaxed">
+                        Como GitHub Pages es un sitio estático, en <strong>Modo Local</strong> los datos se guardan únicamente en el navegador de cada dispositivo. Para que tus alumnos suban sus videos desde su casa y tú los revises desde tu computadora automáticamente, conecta una base de datos gratuita de <strong>Firebase Firestore</strong> pegando tu configuración en la constante <code class="bg-stone-100 px-1.5 py-0.5 rounded text-xs font-mono">FIREBASE_CONFIG</code> dentro de <code class="bg-stone-100 px-1.5 py-0.5 rounded text-xs font-mono">index.html</code> (o pruébalo primero aquí en este navegador).
+                    </p>
+                    <div class="bg-stone-50 border border-stone-200 rounded-xl p-4 text-xs text-stone-700 space-y-1.5">
+                        <p class="font-bold text-stone-800">Pasos rápidos para activar Firebase gratis:</p>
+                        <ol class="list-decimal list-inside space-y-1">
+                            <li>Crea un proyecto gratis en <strong>console.firebase.google.com</strong>.</li>
+                            <li>Activa <strong>Firestore Database</strong> (en modo prueba o con reglas para <code class="bg-white px-1 rounded">viccan_users</code> y <code class="bg-white px-1 rounded">viccan_submissions</code>).</li>
+                            <li>En Configuración del proyecto &gt; Tus apps &gt; Web, copia el objeto <code class="bg-white px-1 rounded">firebaseConfig</code>.</li>
+                            <li>Pégalo en la línea <code class="bg-white px-1 rounded">const FIREBASE_CONFIG = { ... }</code> de este archivo antes de subirlo a GitHub.</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm space-y-4">
+                    <h3 class="text-lg font-extrabold text-stone-800">💾 Respaldo manual (Exportar / Importar JSON)</h3>
+                    <p class="text-sm text-stone-600">
+                        Descarga una copia de todos los alumnos, videos y retroalimentaciones, o importa un archivo de respaldo.
+                    </p>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="exportAllData()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition">
+                            ⬇ Exportar respaldo JSON
+                        </button>
+                        <label class="cursor-pointer bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-sm px-4 py-2.5 rounded-xl transition">
+                            ⬆ Importar respaldo JSON
+                            <input type="file" accept=".json" onchange="importAllData(event)" class="hidden">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm space-y-3">
+                    <h3 class="text-lg font-extrabold text-stone-800">🔑 Cambiar contraseña de Administrador</h3>
+                    <p class="text-sm text-stone-600">
+                        Escribe una nueva contraseña para generar su código seguro (hash SHA-256) y reemplaza <code class="bg-stone-100 px-1.5 py-0.5 rounded text-xs font-mono">ADMIN_PASSWORD_HASH</code> en el código de <code class="bg-stone-100 px-1.5 py-0.5 rounded text-xs font-mono">index.html</code> antes de subirlo a GitHub.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input type="text" id="new-admin-pass-input" placeholder="Nueva contraseña deseada" class="flex-1 px-3.5 py-2 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <button onclick="generateAdminHashTool()" class="bg-stone-900 hover:bg-stone-800 text-white font-semibold text-sm px-4 py-2 rounded-xl transition">
+                            Generar hash SHA-256
+                        </button>
+                    </div>
+                    <div id="generated-hash-box" class="hidden bg-stone-900 text-emerald-300 font-mono text-xs p-3 rounded-xl break-all"></div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Pie de página -->
+        <footer class="bg-white border-t border-stone-200 mt-10 py-6">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-stone-500">
+                <p><strong>VíCCAN</strong> • Recuerda siempre entrenar con refuerzo positivo, paciencia y premios pequeños. 🦴</p>
+                <button id="btn-reset-student-progress" onclick="resetProgress()" class="text-stone-400 hover:text-rose-600 underline transition">
+                    Reiniciar lista de completados
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modal de Reporte para Enviar al Entrenador -->
+    <div id="summary-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-900/60 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-fade-in">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-extrabold text-stone-800 flex items-center gap-2">
+                    <span>📤</span> Reporte de Práctica
+                </h3>
+                <button onclick="closeSummaryModal()" class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-600 font-bold transition">
+                    ✕
+                </button>
+            </div>
+            <p class="text-sm text-stone-600">
+                Copia este resumen y envíamelo por WhatsApp o mensaje junto con tus videos grabados:
+            </p>
+            <textarea id="summary-textarea" rows="8" readonly class="w-full p-4 text-sm bg-stone-50 border border-stone-200 rounded-2xl text-stone-700 font-mono focus:outline-none resize-none"></textarea>
+            <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                <button onclick="copySummary()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-5 rounded-xl transition flex items-center justify-center gap-2 shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                    <span>Copiar texto</span>
+                </button>
+                <button onclick="closeSummaryModal()" class="sm:w-32 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold py-3 px-4 rounded-xl transition">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * =========================================================================
+         * CONFIGURACIÓN DE ADMINISTRADOR Y NUBE (FIREBASE)
+         * =========================================================================
+         * 1. Usuario Admin por defecto: "admin"
+         *    Contraseña Admin por defecto: "viccan2026"
+         *    (Puedes cambiar el hash desde la pestaña Admin -> Configuración -> Generar hash)
+         */
+        const ADMIN_USERNAME = 'admin';
+        const ADMIN_PASSWORD_HASH = '598c8049245945e991e885d7554df7073b655ff2152b44b6734145d4274cc298';
+
+        /**
+         * 2. Configuración opcional de Firebase Firestore para sincronizar alumnos y videos
+         *    entre múltiples dispositivos al alojar en GitHub Pages.
+         *    Si dejas apiKey vacío (""), la app funcionará en Modo Local (localStorage).
+         */
+        const FIREBASE_CONFIG = {
+            apiKey: "",
+            authDomain: "",
+            projectId: "",
+            storageBucket: "",
+            messagingSenderId: "",
+            appId: ""
+        };
+
+        // Claves de almacenamiento local
+        const LS_USERS_KEY = 'viccan_users_v1';
+        const LS_SUBMISSIONS_KEY = 'viccan_submissions_v1';
+        const LS_SESSION_KEY = 'viccan_session_v1';
+
+        /**
+         * Base de datos de ejercicios de entrenamiento canino en casa.
+         */
+        const exercises = [
+            {
+                id: 'ex-1',
+                title: 'Target de Mano ("Toca")',
+                category: 'Obediencia Básica',
+                level: 'Principiante',
+                duration: '3-5 min',
+                materials: 'Premios pequeños y suaves',
+                objective: 'Enseñar al perro a tocar tu palma abierta con su nariz. Es ideal para redirigir su atención o posicionarlo.',
+                steps: [
+                    'Coloca tu palma abierta y vacía a unos 5 cm de su nariz.',
+                    'En cuanto la huela o la toque por curiosidad, marca con "¡Bien!" (o clicker) y dale un premio con la otra mano.',
+                    'Repite 5 veces y luego empieza a mover la mano ligeramente a los lados para que tenga que dar un paso para tocarla.'
+                ],
+                videoTip: 'Graba 4 o 5 repeticiones seguidas cambiando tu mano de posición (izquierda, derecha, abajo) para ver su entusiasmo y tu tiempo de respuesta al premiar.'
+            },
+            {
+                id: 'ex-2',
+                title: 'Contacto Visual ("Mírame")',
+                category: 'Obediencia Básica',
+                level: 'Principiante',
+                duration: '3 min',
+                materials: 'Premios de alto valor',
+                objective: 'Fortalecer el enfoque hacia ti y pedir permiso visual antes de recibir algo bueno.',
+                steps: [
+                    'Sostén un premio en tu mano cerrada y sepárala ligeramente de tu cuerpo.',
+                    'Espera en silencio. Al principio tu perro mirará tu mano; ten paciencia.',
+                    'En el instante exacto en que desvíe la mirada de tu mano hacia tus ojos, di "¡Bien!" y prémialo.'
+                ],
+                videoTip: 'Coloca el celular de frente o en diagonal para que pueda ver claramente cuándo tu perro te mira a los ojos y qué tan rápido entregas el premio.'
+            },
+            {
+                id: 'ex-3',
+                title: 'Ir a su Cama o Tapete ("A tu lugar")',
+                category: 'Autocontrol y Calma',
+                level: 'Principiante',
+                duration: '5 min',
+                materials: 'Una cama, tapete o toalla doblada y premios',
+                objective: 'Crear un espacio seguro donde el perro elija relajarse, muy útil cuando llegan visitas o estás comiendo.',
+                steps: [
+                    'Guía a tu perro hacia el tapete con un premio. Cuando las 4 patas estén arriba, marca y premia sobre el tapete.',
+                    'Pídele que se eche y entrega varios premios seguidos entre sus patas delanteras para fomentar la calma.',
+                    'Di la palabra de liberación (ej. "¡Libre!") y lanza un premio fuera del tapete para reiniciar el juego.'
+                ],
+                videoTip: 'Graba el ciclo completo dos veces: desde que lo mandas al tapete, cómo se acomoda, una breve pausa de 5 segundos y la liberación.'
+            },
+            {
+                id: 'ex-4',
+                title: 'Juego del "Déjalo" (Autocontrol)',
+                category: 'Autocontrol y Calma',
+                level: 'Intermedio',
+                duration: '5 min',
+                materials: 'Premios en dos manos',
+                objective: 'Enseñar que ignorar un estímulo tentador es lo que le hace ganar la recompensa.',
+                steps: [
+                    'Muestra un premio en tu puño cerrado cerca de su nariz. Si lo lame o rasca, mantén el puño cerrado sin regañar.',
+                    'En cuanto retire la nariz hacia atrás (aunque sea 1 centímetro), marca "¡Bien!" y dale un premio con tu OTRA mano.',
+                    'Si ya domina el puño cerrado, intenta abrir la palma lentamente y ciérrala solo si intenta tomarlo.'
+                ],
+                videoTip: 'Graba de cerca tus manos y la cara de tu perro para observar su lenguaje corporal y el momento en que decide apartarse.'
+            },
+            {
+                id: 'ex-5',
+                title: 'Búsqueda de Premios (Olfato libre)',
+                category: 'Olfato y Mente',
+                level: 'Principiante',
+                duration: '5-8 min',
+                materials: '10 premios olorosos o su croqueta',
+                objective: 'Cansar mentalmente a tu perro usando su sentido más poderoso: el olfato. Reduce el estrés y la ansiedad.',
+                steps: [
+                    'Pídele que espere en otra habitación (o que alguien lo sostenga suavemente).',
+                    'Esconde premios en lugares fáciles y a su altura (junto a patas de sillas, sobre una toalla arrugada, en esquinas).',
+                    'Libéralo con la señal "¡Busca!" y déjalo olfatear sin darle pistas ni apresurarlo.'
+                ],
+                videoTip: 'Graba 30-45 segundos mientras busca activamente. Quiero ver si usa la nariz con calma o si te mira pidiendo ayuda.'
+            },
+            {
+                id: 'ex-6',
+                title: 'El Juego de los Vasos (Trilero)',
+                category: 'Olfato y Mente',
+                level: 'Principiante',
+                duration: '5 min',
+                materials: '3 vasos de plástico o cartón no rompibles y premios',
+                objective: 'Estimular la resolución de problemas, la concentración y el uso del olfato en espacios pequeños.',
+                steps: [
+                    'Coloca un premio debajo de un vaso mientras tu perro observa y anímalo a tumbarlo con el hocico o la pata.',
+                    'Cuando entienda cómo volcar un vaso, coloca 3 vasos boca abajo y esconde el premio solo en uno.',
+                    'Déjalo olfatear y elegir. ¡Celébralo mucho cuando acierte!'
+                ],
+                videoTip: 'Graba 2 o 3 rondas donde él tenga que elegir entre los 3 vasos para ver cómo resuelve el reto.'
+            },
+            {
+                id: 'ex-7',
+                title: 'Permanencia con Distracciones ("Quieto")',
+                category: 'Obediencia Básica',
+                level: 'Intermedio',
+                duration: '5 min',
+                materials: 'Premios',
+                objective: 'Mejorar la paciencia manteniendo una posición (sentado o echado) mientras te mueves a su alrededor.',
+                steps: [
+                    'Pídele "Sentado" o "Echado" y haz la señal de "Quieto".',
+                    'Da un paso atrás, espera 3 segundos, regresa hacia él y prémialo en su posición.',
+                    'Aumenta poco a poco la dificultad: da un paso lateral, aplaude suavemente o agáchate y levántate antes de premiar.'
+                ],
+                videoTip: 'Graba en plano amplio para ver la distancia que tomas, si tu perro mantiene la postura y cómo regresas a premiarlo antes de liberarlo.'
+            },
+            {
+                id: 'ex-8',
+                title: 'Subir Patas Delanteras (Propiocepción)',
+                category: 'Trucos y Cuerpo',
+                level: 'Intermedio',
+                duration: '4 min',
+                materials: 'Un libro grueso, escalón bajo o caja firme antideslizante',
+                objective: 'Desarrollar conciencia corporal, equilibrio y confianza en diferentes superficies.',
+                steps: [
+                    'Coloca el objeto firme en el suelo (asegúrate de que no resbale).',
+                    'Guía a tu perro con un premio para que ponga sus dos patas delanteras encima.',
+                    'Marca y premia varias veces mientras las mantiene arriba. Si ya lo domina, intenta dar un paso lateral para que gire sus patas traseras.'
+                ],
+                videoTip: 'Graba de lado para evaluar su postura, que el objeto sea seguro y cómo sube y baja con control.'
+            },
+            {
+                id: 'ex-9',
+                title: 'Slalom / Ocho entre Piernas',
+                category: 'Trucos y Cuerpo',
+                level: 'Avanzado',
+                duration: '5 min',
+                materials: 'Premios en ambas manos',
+                objective: 'Mejorar la flexibilidad, coordinación y el trabajo en equipo de forma súper divertida.',
+                steps: [
+                    'Párate con las piernas separadas más allá del ancho de tus hombros.',
+                    'Usa tu mano derecha para guiarlo por detrás de tu pierna derecha y pasar por el medio.',
+                    'Recíbelo con tu mano izquierda para guiarlo alrededor de tu pierna izquierda formando un "8". Premia al completar cada curva.'
+                ],
+                videoTip: 'Graba de frente a una distancia de 2 metros para ver la fluidez del movimiento y cómo usas tus manos como guía.'
+            },
+            {
+                id: 'ex-10',
+                title: 'Relajación con Toalla Enrollada',
+                category: 'Autocontrol y Calma',
+                level: 'Principiante',
+                duration: '5-10 min',
+                materials: 'Una toalla vieja y croquetas o premios pequeños',
+                objective: 'Fomentar la calma y el desgaste mental mediante el lamido y el desenrollado paciente.',
+                steps: [
+                    'Extiende una toalla en el piso y esparce premios a lo largo de ella.',
+                    'Enróllala como un taquito (si es principiante, déjala floja; si es experto, hazle un nudo suave).',
+                    'Entrégasela a tu perro y supervisa mientras usa su nariz y patas para desenrollarla.'
+                ],
+                videoTip: 'Graba un clip corto de 20-30 segundos mostrándome qué nivel de dificultad usaste (enrollado simple o con nudo) y cómo interactúa con la toalla.'
+            }
+        ];
+
+        // Estado global de la aplicación
+        let db = null; // Instancia de Firestore si está configurado
+        let isCloudMode = false;
+        let currentSession = null; // { role: 'student' | 'admin', userId, studentName, dogName, identifier }
+        let usersMap = {};         // { userId: userObj }
+        let submissionsMap = {};   // { `${userId}_${exerciseId}`: submissionObj }
+
+        let activeCategory = 'Todos';
+        let adminPreviewStudentView = false;
+        let adminVideoFilter = 'pending'; // 'pending' | 'all' | 'reviewed'
+        let adminCurrentSection = 'videos';
+
+        // Estado del temporizador
+        let timerSeconds = 180;
+        let initialTimerSeconds = 180;
+        let timerInterval = null;
+        let isTimerRunning = false;
+
+        /**
+         * Inicialización al cargar la página
+         */
+        document.addEventListener('DOMContentLoaded', async () => {
+            initCloudBackend();
+            updateStorageIndicators();
+            updateTimerDisplay();
+
+            // Restaurar sesión previa si existe
+            try {
+                const savedSession = localStorage.getItem(LS_SESSION_KEY);
+                if (savedSession) {
+                    currentSession = JSON.parse(savedSession);
+                    await enterApp();
+                    return;
+                }
+            } catch (err) {
+                console.warn('No se pudo restaurar la sesión:', err);
+            }
+
+            showAuthScreen();
+        });
+
+        /**
+         * Inicializa Firebase Firestore si FIREBASE_CONFIG tiene datos válidos.
+         */
+        function initCloudBackend() {
+            if (FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId && typeof firebase !== 'undefined') {
+                try {
+                    if (!firebase.apps.length) {
+                        firebase.initializeApp(FIREBASE_CONFIG);
+                    }
+                    db = firebase.firestore();
+                    isCloudMode = true;
+                } catch (err) {
+                    console.error('Error al inicializar Firebase:', err);
+                    isCloudMode = false;
+                }
+            }
+        }
+
+        function updateStorageIndicators() {
+            const label = isCloudMode ? 'Nube Firebase activa' : 'Modo Local (navegador)';
+            const dotClass = isCloudMode ? 'w-2 h-2 rounded-full bg-emerald-300' : 'w-2 h-2 rounded-full bg-amber-300';
+            document.getElementById('auth-storage-label').textContent = label;
+            document.getElementById('auth-storage-dot').className = dotClass;
+            document.getElementById('header-storage-pill').textContent = isCloudMode ? '☁️ Nube' : '💾 Local';
+        }
+
+        /**
+         * =========================================================================
+         * CAPA DE DATOS (LOCALSTORAGE + FIRESTORE)
+         * =========================================================================
+         */
+        function getLocalMap(key) {
+            try {
+                const raw = localStorage.getItem(key);
+                return raw ? JSON.parse(raw) : {};
+            } catch {
+                return {};
+            }
+        }
+
+        function setLocalMap(key, obj) {
+            try {
+                localStorage.setItem(key, JSON.stringify(obj));
+            } catch (err) {
+                console.warn('Error guardando en localStorage:', err);
+            }
+        }
+
+        async function loadAllData() {
+            if (isCloudMode && db) {
+                try {
+                    const [usersSnap, subsSnap] = await Promise.all([
+                        db.collection('viccan_users').get(),
+                        db.collection('viccan_submissions').get()
+                    ]);
+                    const uMap = {};
+                    usersSnap.forEach(doc => { uMap[doc.id] = { id: doc.id, ...doc.data() }; });
+                    const sMap = {};
+                    subsSnap.forEach(doc => { sMap[doc.id] = { id: doc.id, ...doc.data() }; });
+                    usersMap = uMap;
+                    submissionsMap = sMap;
+                    return;
+                } catch (err) {
+                    console.error('Error leyendo Firestore, usando caché local:', err);
+                    showToast('No se pudo conectar con la nube; mostrando datos locales.', '⚠️');
+                }
+            }
+            usersMap = getLocalMap(LS_USERS_KEY);
+            submissionsMap = getLocalMap(LS_SUBMISSIONS_KEY);
+        }
+
+        async function loadStudentData(userId) {
+            if (isCloudMode && db) {
+                try {
+                    const [userDoc, subsSnap] = await Promise.all([
+                        db.collection('viccan_users').doc(userId).get(),
+                        db.collection('viccan_submissions').where('userId', '==', userId).get()
+                    ]);
+                    if (userDoc.exists) {
+                        usersMap[userId] = { id: userDoc.id, ...userDoc.data() };
+                    }
+                    subsSnap.forEach(doc => {
+                        submissionsMap[doc.id] = { id: doc.id, ...doc.data() };
+                    });
+                    return;
+                } catch (err) {
+                    console.error('Error cargando datos del alumno:', err);
+                }
+            }
+            usersMap = getLocalMap(LS_USERS_KEY);
+            submissionsMap = getLocalMap(LS_SUBMISSIONS_KEY);
+        }
+
+        async function saveUserRecord(userObj) {
+            usersMap[userObj.id] = userObj;
+            setLocalMap(LS_USERS_KEY, usersMap);
+            if (isCloudMode && db) {
+                await db.collection('viccan_users').doc(userObj.id).set(userObj, { merge: true });
+            }
+        }
+
+        async function findUserByIdentifier(identifier) {
+            const norm = normalizeIdentifier(identifier);
+            if (isCloudMode && db) {
+                const snap = await db.collection('viccan_users').where('identifier', '==', norm).limit(1).get();
+                if (!snap.empty) {
+                    const doc = snap.docs[0];
+                    const data = { id: doc.id, ...doc.data() };
+                    usersMap[data.id] = data;
+                    return data;
+                }
+                return null;
+            }
+            const localUsers = getLocalMap(LS_USERS_KEY);
+            return Object.values(localUsers).find(u => u.identifier === norm) || null;
+        }
+
+        async function saveSubmissionRecord(subObj) {
+            submissionsMap[subObj.id] = subObj;
+            setLocalMap(LS_SUBMISSIONS_KEY, submissionsMap);
+            if (isCloudMode && db) {
+                await db.collection('viccan_submissions').doc(subObj.id).set(subObj, { merge: true });
+            }
+        }
+
+        /**
+         * =========================================================================
+         * AUTENTICACIÓN Y SESIÓN
+         * =========================================================================
+         */
+        function normalizeIdentifier(str) {
+            return String(str || '').trim().toLowerCase().replace(/\s+/g, '');
+        }
+
+        function switchAuthTab(tab) {
+            const tabs = ['login', 'register', 'admin'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                const form = document.getElementById(`form-${t}`);
+                if (t === tab) {
+                    btn.className = 'py-3.5 px-2 text-teal-700 border-b-2 border-teal-700 bg-white transition';
+                    form.classList.remove('hidden');
+                } else {
+                    btn.className = 'py-3.5 px-2 text-stone-500 hover:text-stone-800 border-b-2 border-transparent transition';
+                    form.classList.add('hidden');
+                }
+            });
+        }
+
+        async function handleStudentRegister(e) {
+            e.preventDefault();
+            const studentName = document.getElementById('reg-student-name').value.trim();
+            const dogName = document.getElementById('reg-dog-name').value.trim();
+            const identifier = normalizeIdentifier(document.getElementById('reg-identifier').value);
+            const password = document.getElementById('reg-password').value;
+
+            if (!studentName || !dogName || !identifier || password.length < 4) {
+                showToast('Completa todos los campos (contraseña mín. 4 caracteres).', '⚠️');
+                return;
+            }
+
+            const btn = document.getElementById('btn-register-submit');
+            btn.disabled = true;
+            btn.textContent = 'Creando cuenta...';
+
+            try {
+                const existing = await findUserByIdentifier(identifier);
+                if (existing) {
+                    showToast('Ese usuario/correo ya está registrado. Usa "Ingresar".', '⚠️');
+                    switchAuthTab('login');
+                    document.getElementById('login-identifier').value = identifier;
+                    return;
+                }
+
+                const passwordHash = await sha256(password);
+                const userId = 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+                const newUser = {
+                    id: userId,
+                    identifier,
+                    studentName,
+                    dogName,
+                    passwordHash,
+                    createdAt: new Date().toISOString()
+                };
+
+                await saveUserRecord(newUser);
+
+                currentSession = {
+                    role: 'student',
+                    userId: newUser.id,
+                    studentName: newUser.studentName,
+                    dogName: newUser.dogName,
+                    identifier: newUser.identifier
+                };
+                localStorage.setItem(LS_SESSION_KEY, JSON.stringify(currentSession));
+                document.getElementById('reg-password').value = '';
+                showToast(`¡Bienvenido(a), ${studentName} y ${dogName}!`, '🎉');
+                await enterApp();
+            } catch (err) {
+                console.error(err);
+                showToast('Ocurrió un error al registrar la cuenta.', '❌');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Crear cuenta y comenzar 🚀';
+            }
+        }
+
+        async function handleStudentLogin(e) {
+            e.preventDefault();
+            const identifier = normalizeIdentifier(document.getElementById('login-identifier').value);
+            const password = document.getElementById('login-password').value;
+
+            const btn = document.getElementById('btn-login-submit');
+            btn.disabled = true;
+            btn.textContent = 'Verificando...';
+
+            try {
+                const user = await findUserByIdentifier(identifier);
+                if (!user) {
+                    showToast('Usuario no encontrado. Regístrate en "Soy nuevo".', '⚠️');
+                    return;
+                }
+                const enteredHash = await sha256(password);
+                if (enteredHash !== user.passwordHash) {
+                    showToast('Contraseña incorrecta. Intenta de nuevo.', '🔒');
+                    return;
+                }
+
+                currentSession = {
+                    role: 'student',
+                    userId: user.id,
+                    studentName: user.studentName,
+                    dogName: user.dogName,
+                    identifier: user.identifier
+                };
+                localStorage.setItem(LS_SESSION_KEY, JSON.stringify(currentSession));
+                document.getElementById('login-password').value = '';
+                showToast(`¡Hola de nuevo, ${user.studentName}!`, '🐾');
+                await enterApp();
+            } catch (err) {
+                console.error(err);
+                showToast('Error al iniciar sesión.', '❌');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Entrar a mi rutina 🐾';
+            }
+        }
+
+        async function handleAdminLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('admin-username').value.trim().toLowerCase();
+            const password = document.getElementById('admin-password').value;
+
+            const enteredHash = await sha256(password);
+            if (username !== ADMIN_USERNAME || enteredHash !== ADMIN_PASSWORD_HASH) {
+                showToast('Credenciales de administrador incorrectas.', '🔒');
+                return;
+            }
+
+            currentSession = {
+                role: 'admin',
+                userId: 'admin',
+                studentName: 'Entrenador VíCCAN',
+                dogName: '',
+                identifier: ADMIN_USERNAME
+            };
+            localStorage.setItem(LS_SESSION_KEY, JSON.stringify(currentSession));
+            document.getElementById('admin-password').value = '';
+            showToast('Sesión de administrador iniciada.', '🛡️');
+            await enterApp();
+        }
+
+        function logout() {
+            stopTimer();
+            currentSession = null;
+            adminPreviewStudentView = false;
+            localStorage.removeItem(LS_SESSION_KEY);
+            showAuthScreen();
+            showToast('Sesión cerrada correctamente.', '👋');
+        }
+
+        function showAuthScreen() {
+            document.getElementById('auth-screen').classList.remove('hidden');
+            document.getElementById('app-shell').classList.add('hidden');
+            document.getElementById('app-shell').classList.remove('flex');
+        }
+
+        async function enterApp() {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('app-shell').classList.remove('hidden');
+            document.getElementById('app-shell').classList.add('flex');
+
+            if (currentSession.role === 'admin') {
+                await loadAllData();
+                renderAppForAdmin();
+            } else {
+                await loadStudentData(currentSession.userId);
+                renderAppForStudent();
+            }
+        }
+
+        async function refreshAllData() {
+            if (!currentSession) return;
+            if (currentSession.role === 'admin') {
+                await loadAllData();
+                renderAdminDashboard();
+            } else {
+                await loadStudentData(currentSession.userId);
+                renderExercises();
+                updateProgressUI();
+            }
+            showToast('Datos actualizados.', '🔄');
+        }
+
+        /**
+         * =========================================================================
+         * RENDERIZADO SEGÚN ROL (ALUMNO VS ADMINISTRADOR)
+         * =========================================================================
+         */
+        function renderAppForStudent() {
+            document.getElementById('session-badge').textContent = `👤 ${currentSession.studentName} · 🐶 ${currentSession.dogName}`;
+            document.getElementById('session-subtext').textContent = `Cuenta: ${currentSession.identifier}`;
+            document.getElementById('btn-toggle-admin-preview').classList.add('hidden');
+            document.getElementById('student-progress-card').classList.remove('hidden');
+            document.getElementById('btn-reset-student-progress').classList.remove('hidden');
+
+            document.getElementById('header-role-pill').textContent = 'VíCCAN • Rutina para días en casa';
+            document.getElementById('header-title').textContent = 'Entrenamiento Canino en Casa';
+            document.getElementById('header-desc').textContent = '¿Hoy no pudieron salir? No importa. Elige 2 o 3 ejercicios, realiza sesiones cortas y divertidas, y pega el enlace de tu video para recibir retroalimentación.';
+
+            document.getElementById('student-view').classList.remove('hidden');
+            document.getElementById('admin-view').classList.add('hidden');
+
+            document.getElementById('student-name').value = currentSession.studentName || '';
+            document.getElementById('dog-name').value = currentSession.dogName || '';
+
+            renderExercises();
+            updateProgressUI();
+        }
+
+        function renderAppForAdmin() {
+            document.getElementById('session-badge').textContent = '🛡️ Modo Entrenador (Administrador)';
+            document.getElementById('session-subtext').textContent = 'Panel de revisión y retroalimentación de videos';
+            const toggleBtn = document.getElementById('btn-toggle-admin-preview');
+            toggleBtn.classList.remove('hidden');
+
+            if (adminPreviewStudentView) {
+                toggleBtn.textContent = '🛡️ Volver al Panel Admin';
+                document.getElementById('student-progress-card').classList.remove('hidden');
+                document.getElementById('student-view').classList.remove('hidden');
+                document.getElementById('admin-view').classList.add('hidden');
+                document.getElementById('header-role-pill').textContent = 'VíCCAN • Vista previa de ejercicios';
+                document.getElementById('header-title').textContent = 'Entrenamiento Canino en Casa';
+                document.getElementById('student-name').value = 'Vista Admin';
+                document.getElementById('dog-name').value = 'Ejemplo';
+                renderExercises();
+                updateProgressUI();
+            } else {
+                toggleBtn.textContent = '👁️ Ver ejercicios';
+                document.getElementById('student-progress-card').classList.add('hidden');
+                document.getElementById('btn-reset-student-progress').classList.add('hidden');
+                document.getElementById('student-view').classList.add('hidden');
+                document.getElementById('admin-view').classList.remove('hidden');
+
+                document.getElementById('header-role-pill').textContent = 'VíCCAN • Panel de Entrenador';
+                document.getElementById('header-title').textContent = 'Retroalimentación de Videos';
+                document.getElementById('header-desc').textContent = 'Revisa los videos enviados por tus alumnos, evalúa su progreso y deja comentarios personalizados en cada ejercicio.';
+                renderAdminDashboard();
+            }
+        }
+
+        function toggleAdminViewMode() {
+            adminPreviewStudentView = !adminPreviewStudentView;
+            renderAppForAdmin();
+        }
+
+        /**
+         * =========================================================================
+         * LÓGICA DEL ALUMNO: EJERCICIOS, VIDEOS Y RETROALIMENTACIÓN
+         * =========================================================================
+         */
+        function getSubmissionKey(userId, exerciseId) {
+            return `${userId}_${exerciseId}`;
+        }
+
+        function getStudentSubmission(exerciseId) {
+            if (!currentSession) return null;
+            return submissionsMap[getSubmissionKey(currentSession.userId, exerciseId)] || null;
+        }
+
+        async function saveProfile() {
+            if (!currentSession || currentSession.role !== 'student') return;
+            const studentName = document.getElementById('student-name').value.trim();
+            const dogName = document.getElementById('dog-name').value.trim();
+            if (!studentName || !dogName) return;
+
+            currentSession.studentName = studentName;
+            currentSession.dogName = dogName;
+            localStorage.setItem(LS_SESSION_KEY, JSON.stringify(currentSession));
+            document.getElementById('session-badge').textContent = `👤 ${studentName} · 🐶 ${dogName}`;
+
+            const existingUser = usersMap[currentSession.userId];
+            if (existingUser) {
+                existingUser.studentName = studentName;
+                existingUser.dogName = dogName;
+                await saveUserRecord(existingUser);
+            }
+        }
+
+        function filterCategory(category) {
+            activeCategory = category;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.cat === category) {
+                    btn.className = 'filter-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-teal-700 text-white shadow-sm';
+                } else {
+                    btn.className = 'filter-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-white text-stone-600 border border-stone-200 hover:bg-stone-100';
+                }
+            });
+            renderExercises();
+        }
+
+        function getLevelBadgeClass(level) {
+            switch (level) {
+                case 'Principiante': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                case 'Intermedio': return 'bg-amber-50 text-amber-700 border-amber-200';
+                case 'Avanzado': return 'bg-rose-50 text-rose-700 border-rose-200';
+                default: return 'bg-stone-100 text-stone-700 border-stone-200';
+            }
+        }
+
+        function getFeedbackRatingMeta(rating) {
+            switch (rating) {
+                case 'excellent':
+                    return { label: '🌟 ¡Excelente!', cls: 'bg-emerald-100 text-emerald-800 border-emerald-300' };
+                case 'good':
+                    return { label: '👍 Muy bien, sigue así', cls: 'bg-teal-100 text-teal-800 border-teal-300' };
+                case 'improve':
+                    return { label: '💡 Tip de mejora / Repetir', cls: 'bg-amber-100 text-amber-900 border-amber-300' };
+                default:
+                    return { label: '💬 Revisado', cls: 'bg-stone-100 text-stone-800 border-stone-300' };
+            }
+        }
+
+        function renderExercises() {
+            const grid = document.getElementById('exercises-grid');
+            const filtered = exercises.filter(ex => {
+                if (activeCategory === 'Todos') return true;
+                if (activeCategory === 'Con Retroalimentación') {
+                    const sub = getStudentSubmission(ex.id);
+                    return Boolean(sub && sub.feedback && sub.feedback.comment);
+                }
+                return ex.category === activeCategory;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="md:col-span-2 bg-white border border-stone-200 rounded-2xl p-8 text-center text-stone-500">
+                        <p class="text-base font-semibold">No hay ejercicios en esta categoría todavía.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(ex => {
+                const sub = getStudentSubmission(ex.id);
+                const isDone = Boolean(sub && sub.completed);
+                const hasVideo = Boolean(sub && sub.videoUrl);
+                const hasFeedback = Boolean(sub && sub.feedback && sub.feedback.comment);
+                const levelClass = getLevelBadgeClass(ex.level);
+                const ratingMeta = hasFeedback ? getFeedbackRatingMeta(sub.feedback.rating) : null;
+
+                return `
+                    <article class="bg-white rounded-2xl border ${isDone ? 'border-emerald-400 ring-2 ring-emerald-100' : 'border-stone-200'} shadow-sm hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden">
+                        <!-- Cabecera de tarjeta -->
+                        <div class="p-5 pb-4 border-b border-stone-100">
+                            <div class="flex items-start justify-between gap-3 mb-2.5">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="text-xs font-semibold px-2.5 py-1 rounded-lg border ${levelClass}">
+                                        ${escapeHtml(ex.level)}
+                                    </span>
+                                    <span class="text-xs font-medium px-2.5 py-1 rounded-lg bg-stone-100 text-stone-600">
+                                        ⏱ ${escapeHtml(ex.duration)}
+                                    </span>
+                                    ${hasFeedback ? `
+                                        <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800">
+                                            ✓ Revisado
+                                        </span>
+                                    ` : hasVideo ? `
+                                        <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800">
+                                            ⏳ En revisión
+                                        </span>
+                                    ` : ''}
+                                </div>
+                                <span class="text-xs font-medium text-teal-700 bg-teal-50 px-2.5 py-1 rounded-lg shrink-0">
+                                    ${escapeHtml(ex.category)}
+                                </span>
+                            </div>
+                            <h3 class="text-lg font-extrabold text-stone-800 leading-snug">
+                                ${escapeHtml(ex.title)}
+                            </h3>
+                            <p class="text-sm text-stone-600 mt-1.5 leading-relaxed">
+                                ${escapeHtml(ex.objective)}
+                            </p>
+                        </div>
+
+                        <!-- Cuerpo de la tarjeta -->
+                        <div class="p-5 space-y-4 flex-1 flex flex-col justify-between">
+                            <div class="space-y-4">
+                                <div class="text-xs text-stone-600 bg-stone-50 px-3.5 py-2.5 rounded-xl flex items-center gap-2">
+                                    <span class="font-bold text-stone-700">🎒 Necesitas:</span>
+                                    <span>${escapeHtml(ex.materials)}</span>
+                                </div>
+
+                                <div>
+                                    <h4 class="text-xs font-bold uppercase tracking-wider text-stone-400 mb-2">Paso a paso</h4>
+                                    <ol class="space-y-2 text-sm text-stone-700">
+                                        ${ex.steps.map((step, idx) => `
+                                            <li class="flex items-start gap-2.5">
+                                                <span class="w-5 h-5 rounded-full bg-teal-100 text-teal-800 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">${idx + 1}</span>
+                                                <span class="leading-relaxed">${escapeHtml(step)}</span>
+                                            </li>
+                                        `).join('')}
+                                    </ol>
+                                </div>
+
+                                <div class="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3.5">
+                                    <div class="flex items-center gap-1.5 text-amber-800 font-bold text-xs uppercase tracking-wider mb-1">
+                                        <span>🎥</span>
+                                        <span>¿Qué mostrar en tu video?</span>
+                                    </div>
+                                    <p class="text-xs sm:text-sm text-amber-900/90 leading-relaxed">
+                                        ${escapeHtml(ex.videoTip)}
+                                    </p>
+                                </div>
+
+                                <!-- Bloque de envío de video por parte del alumno -->
+                                <div class="bg-stone-50 border border-stone-200 rounded-xl p-3.5 space-y-2.5">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span class="text-xs font-bold uppercase tracking-wider text-stone-600">📤 Tu video para revisión</span>
+                                        ${hasVideo && isValidHttpUrl(sub.videoUrl) ? `
+                                            <a href="${escapeHtml(sub.videoUrl)}" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-teal-700 hover:underline">
+                                                Ver enlace ↗
+                                            </a>
+                                        ` : ''}
+                                    </div>
+                                    <input type="url" id="video-url-${ex.id}" value="${escapeHtml(sub?.videoUrl || '')}" placeholder="Pega el link de tu video (Drive, YouTube, iCloud...)" class="w-full px-3 py-2 text-xs sm:text-sm bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                                    <input type="text" id="video-note-${ex.id}" value="${escapeHtml(sub?.studentNote || '')}" placeholder="Nota opcional (ej. ¿cómo sentiste a tu perro?)" class="w-full px-3 py-2 text-xs sm:text-sm bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                                    <button type="button" onclick="submitExerciseVideo('${ex.id}')" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs sm:text-sm py-2 px-3 rounded-lg transition">
+                                        ${hasVideo ? 'Actualizar video y nota' : 'Guardar video y marcar listo'}
+                                    </button>
+                                </div>
+
+                                <!-- Retroalimentación del Entrenador -->
+                                ${hasFeedback ? `
+                                    <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 space-y-2">
+                                        <div class="flex flex-wrap items-center justify-between gap-2">
+                                            <span class="text-xs font-bold uppercase tracking-wider text-emerald-800">💬 Retroalimentación del Entrenador</span>
+                                            <span class="text-[11px] font-bold px-2 py-0.5 rounded-md border ${ratingMeta.cls}">
+                                                ${ratingMeta.label}
+                                            </span>
+                                        </div>
+                                        <p class="text-sm text-stone-800 leading-relaxed whitespace-pre-line">${escapeHtml(sub.feedback.comment)}</p>
+                                        <p class="text-[11px] text-emerald-700/80">
+                                            Revisado el ${formatDate(sub.feedback.updatedAt)}
+                                        </p>
+                                    </div>
+                                ` : ''}
+                            </div>
+
+                            <!-- Botón de Completado -->
+                            <div class="pt-2">
+                                <button onclick="toggleComplete('${ex.id}')" class="w-full py-3 px-4 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 active:scale-[0.98] ${
+                                    isDone
+                                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
+                                        : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
+                                }">
+                                    ${isDone
+                                        ? '<span>✓</span><span>¡Ejercicio realizado y completado!</span>'
+                                        : '<span>○</span><span>Marcar como completado</span>'
+                                    }
+                                </button>
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        async function submitExerciseVideo(exerciseId) {
+            if (!currentSession) return;
+            const urlInput = document.getElementById(`video-url-${exerciseId}`).value.trim();
+            const noteInput = document.getElementById(`video-note-${exerciseId}`).value.trim();
+
+            if (!urlInput) {
+                showToast('Pega primero el enlace de tu video (Drive, YouTube, etc.).', '⚠️');
+                return;
+            }
+            if (!isValidHttpUrl(urlInput)) {
+                showToast('El enlace debe empezar con https:// o http://', '⚠️');
+                return;
+            }
+
+            const ex = exercises.find(item => item.id === exerciseId);
+            const subId = getSubmissionKey(currentSession.userId, exerciseId);
+            const existing = submissionsMap[subId] || {};
+
+            const subObj = {
+                ...existing,
+                id: subId,
+                userId: currentSession.userId,
+                studentName: currentSession.studentName,
+                dogName: currentSession.dogName,
+                exerciseId: ex.id,
+                exerciseTitle: ex.title,
+                category: ex.category,
+                completed: true,
+                videoUrl: urlInput,
+                studentNote: noteInput,
+                submittedAt: new Date().toISOString()
+            };
+
+            await saveSubmissionRecord(subObj);
+            renderExercises();
+            updateProgressUI();
+            showToast('¡Video guardado para revisión del entrenador!', '🎥');
+        }
+
+        async function toggleComplete(exerciseId) {
+            if (!currentSession) return;
+            const ex = exercises.find(item => item.id === exerciseId);
+            const subId = getSubmissionKey(currentSession.userId, exerciseId);
+            const existing = submissionsMap[subId] || {
+                id: subId,
+                userId: currentSession.userId,
+                studentName: currentSession.studentName,
+                dogName: currentSession.dogName,
+                exerciseId: ex.id,
+                exerciseTitle: ex.title,
+                category: ex.category
+            };
+
+            const nextDone = !existing.completed;
+            existing.completed = nextDone;
+            existing.studentName = currentSession.studentName;
+            existing.dogName = currentSession.dogName;
+            if (nextDone && !existing.submittedAt) {
+                existing.submittedAt = new Date().toISOString();
+            }
+
+            await saveSubmissionRecord(existing);
+            if (nextDone) {
+                showToast('¡Excelente trabajo! Ejercicio marcado como listo.', '🎉');
+            }
+            renderExercises();
+            updateProgressUI();
+        }
+
+        function updateProgressUI() {
+            const total = exercises.length;
+            let done = 0;
+            if (currentSession) {
+                done = exercises.filter(ex => {
+                    const sub = getStudentSubmission(ex.id);
+                    return Boolean(sub && sub.completed);
+                }).length;
+            }
+            const percent = Math.round((done / total) * 100);
+            document.getElementById('progress-text').textContent = `${done} / ${total}`;
+            document.getElementById('progress-bar').style.width = `${percent}%`;
+        }
+
+        async function resetProgress() {
+            if (!currentSession || currentSession.role !== 'student') return;
+            let changed = false;
+            for (const ex of exercises) {
+                const subId = getSubmissionKey(currentSession.userId, ex.id);
+                const sub = submissionsMap[subId];
+                if (sub && sub.completed) {
+                    sub.completed = false;
+                    await saveSubmissionRecord(sub);
+                    changed = true;
+                }
+            }
+            if (!changed) {
+                showToast('Aún no hay ejercicios marcados.', 'ℹ️');
+                return;
+            }
+            renderExercises();
+            updateProgressUI();
+            showToast('Lista reiniciada. ¡Listos para una nueva sesión!', '🔄');
+        }
+
+        /**
+         * =========================================================================
+         * PANEL DE ADMINISTRADOR (RETROALIMENTACIÓN DE VIDEOS)
+         * =========================================================================
+         */
+        function renderAdminDashboard() {
+            const students = Object.values(usersMap);
+            const allSubs = Object.values(submissionsMap);
+            const videoSubs = allSubs.filter(s => s.videoUrl && isValidHttpUrl(s.videoUrl));
+            const reviewedSubs = videoSubs.filter(s => s.feedback && s.feedback.comment);
+            const pendingSubs = videoSubs.filter(s => !(s.feedback && s.feedback.comment));
+
+            document.getElementById('stat-students').textContent = students.length;
+            document.getElementById('stat-videos').textContent = videoSubs.length;
+            document.getElementById('stat-pending').textContent = pendingSubs.length;
+            document.getElementById('stat-reviewed').textContent = reviewedSubs.length;
+
+            if (adminCurrentSection === 'videos') {
+                renderAdminVideos();
+            } else if (adminCurrentSection === 'students') {
+                renderAdminStudents();
+            }
+        }
+
+        function setAdminSection(sec) {
+            adminCurrentSection = sec;
+            ['videos', 'students', 'settings'].forEach(name => {
+                const btn = document.getElementById(`admin-nav-${name}`);
+                const panel = document.getElementById(`admin-section-${name}`);
+                if (name === sec) {
+                    btn.className = 'px-4 py-2 rounded-xl text-sm font-bold bg-stone-900 text-white transition';
+                    panel.classList.remove('hidden');
+                } else {
+                    btn.className = 'px-4 py-2 rounded-xl text-sm font-semibold bg-stone-100 text-stone-700 hover:bg-stone-200 transition';
+                    panel.classList.add('hidden');
+                }
+            });
+            renderAdminDashboard();
+        }
+
+        function setAdminVideoFilter(filter) {
+            adminVideoFilter = filter;
+            document.querySelectorAll('.admin-vfilter').forEach(btn => {
+                const active = btn.dataset.vfilter === filter;
+                if (active) {
+                    btn.className = filter === 'pending'
+                        ? 'admin-vfilter px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-amber-500 text-white transition'
+                        : 'admin-vfilter px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-teal-700 text-white transition';
+                } else {
+                    btn.className = 'admin-vfilter px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-100 transition';
+                }
+            });
+            renderAdminVideos();
+        }
+
+        function renderAdminVideos() {
+            const container = document.getElementById('admin-videos-list');
+            const query = (document.getElementById('admin-search').value || '').trim().toLowerCase();
+
+            let list = Object.values(submissionsMap).filter(s => s.videoUrl && isValidHttpUrl(s.videoUrl));
+
+            if (adminVideoFilter === 'pending') {
+                list = list.filter(s => !(s.feedback && s.feedback.comment));
+            } else if (adminVideoFilter === 'reviewed') {
+                list = list.filter(s => Boolean(s.feedback && s.feedback.comment));
+            }
+
+            if (query) {
+                list = list.filter(s =>
+                    (s.studentName || '').toLowerCase().includes(query) ||
+                    (s.dogName || '').toLowerCase().includes(query) ||
+                    (s.exerciseTitle || '').toLowerCase().includes(query)
+                );
+            }
+
+            // Más recientes primero
+            list.sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0));
+
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white border border-stone-200 rounded-2xl p-8 text-center text-stone-500 space-y-2">
+                        <div class="text-3xl">🎬</div>
+                        <p class="font-bold text-stone-700">No hay videos en esta vista</p>
+                        <p class="text-sm">Cuando los alumnos peguen el enlace de sus videos en los ejercicios, aparecerán aquí para que los evalúes.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = list.map(sub => {
+                const hasFeedback = Boolean(sub.feedback && sub.feedback.comment);
+                const currentRating = sub.feedback?.rating || 'excellent';
+                const embedHtml = buildVideoPreviewHtml(sub.videoUrl, sub.id);
+
+                return `
+                    <article class="bg-white border ${hasFeedback ? 'border-emerald-300' : 'border-amber-300'} rounded-2xl p-5 shadow-sm space-y-4">
+                        <div class="flex flex-wrap items-start justify-between gap-3 border-b border-stone-100 pb-3">
+                            <div>
+                                <div class="flex flex-wrap items-center gap-2 mb-1">
+                                    <span class="text-xs font-bold px-2.5 py-1 rounded-lg ${hasFeedback ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                                        ${hasFeedback ? '✅ Revisado' : '⏳ Pendiente de revisión'}
+                                    </span>
+                                    <span class="text-xs font-medium px-2.5 py-1 rounded-lg bg-teal-50 text-teal-700">
+                                        ${escapeHtml(sub.category || '')}
+                                    </span>
+                                    <span class="text-xs text-stone-400">
+                                        ${formatDate(sub.submittedAt)}
+                                    </span>
+                                </div>
+                                <h3 class="text-base sm:text-lg font-extrabold text-stone-800">
+                                    ${escapeHtml(sub.exerciseTitle || sub.exerciseId)}
+                                </h3>
+                                <p class="text-sm text-stone-600">
+                                    👤 <strong>${escapeHtml(sub.studentName || 'Alumno')}</strong> · 🐶 <strong>${escapeHtml(sub.dogName || 'Perro')}</strong>
+                                </p>
+                            </div>
+                            <a href="${escapeHtml(sub.videoUrl)}" target="_blank" rel="noopener noreferrer" class="bg-stone-900 hover:bg-stone-800 text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-xl transition shrink-0">
+                                🎥 Abrir video ↗
+                            </a>
+                        </div>
+
+                        ${sub.studentNote ? `
+                            <div class="bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm text-stone-700">
+                                <span class="text-xs font-bold uppercase tracking-wider text-stone-400 block mb-0.5">Nota del alumno:</span>
+                                "${escapeHtml(sub.studentNote)}"
+                            </div>
+                        ` : ''}
+
+                        <!-- Reproductor / Previsualización si es compatible -->
+                        ${embedHtml}
+
+                        <!-- Formulario de Retroalimentación -->
+                        <div class="bg-stone-50 border border-stone-200 rounded-xl p-4 space-y-3">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <label class="text-xs font-bold uppercase tracking-wider text-stone-600">
+                                    Tu retroalimentación para ${escapeHtml(sub.studentName || 'el alumno')}:
+                                </label>
+                                <select id="fb-rating-${sub.id}" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-stone-300 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500">
+                                    <option value="excellent" ${currentRating === 'excellent' ? 'selected' : ''}>🌟 ¡Excelente!</option>
+                                    <option value="good" ${currentRating === 'good' ? 'selected' : ''}>👍 Muy bien, sigue así</option>
+                                    <option value="improve" ${currentRating === 'improve' ? 'selected' : ''}>💡 Tip de mejora / Repetir</option>
+                                </select>
+                            </div>
+                            <textarea id="fb-comment-${sub.id}" rows="3" placeholder="Escribe qué hizo bien, qué ajustar en su timing/premios o el siguiente paso..." class="w-full p-3 text-sm bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">${escapeHtml(sub.feedback?.comment || '')}</textarea>
+                            <div class="flex justify-end">
+                                <button onclick="saveAdminFeedback('${sub.id}')" class="bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-sm px-5 py-2.5 rounded-xl transition shadow-sm">
+                                    ${hasFeedback ? 'Actualizar retroalimentación ✅' : 'Guardar retroalimentación ✅'}
+                                </button>
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        function buildVideoPreviewHtml(url, subId) {
+            const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+            if (ytMatch) {
+                const videoId = ytMatch[1];
+                return `
+                    <div class="space-y-2">
+                        <button type="button" onclick="toggleEmbed('embed-${subId}')" class="text-xs font-bold text-teal-700 hover:underline">
+                            ▶ Mostrar / ocultar reproductor de YouTube aquí
+                        </button>
+                        <div id="embed-${subId}" class="hidden aspect-video w-full rounded-xl overflow-hidden bg-black">
+                            <iframe class="w-full h-full" src="https://www.youtube.com/embed/${escapeHtml(videoId)}" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const driveMatch = url.match(/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/);
+            if (driveMatch) {
+                const fileId = driveMatch[1];
+                return `
+                    <div class="space-y-2">
+                        <button type="button" onclick="toggleEmbed('embed-${subId}')" class="text-xs font-bold text-teal-700 hover:underline">
+                            ▶ Previsualizar video de Google Drive aquí
+                        </button>
+                        <div id="embed-${subId}" class="hidden aspect-video w-full rounded-xl overflow-hidden bg-stone-900">
+                            <iframe class="w-full h-full" src="https://drive.google.com/file/d/${escapeHtml(fileId)}/preview" allow="autoplay"></iframe>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (/\.(mp4|webm|mov)(\?.*)?$/i.test(url)) {
+                return `
+                    <video controls class="w-full max-h-80 rounded-xl bg-black">
+                        <source src="${escapeHtml(url)}">
+                    </video>
+                `;
+            }
+
+            return `<p class="text-xs text-stone-400 break-all">Enlace: ${escapeHtml(url)}</p>`;
+        }
+
+        function toggleEmbed(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle('hidden');
+        }
+
+        async function saveAdminFeedback(subId) {
+            const sub = submissionsMap[subId];
+            if (!sub) return;
+
+            const rating = document.getElementById(`fb-rating-${subId}`).value;
+            const comment = document.getElementById(`fb-comment-${subId}`).value.trim();
+
+            if (!comment) {
+                showToast('Escribe un comentario de retroalimentación antes de guardar.', '⚠️');
+                return;
+            }
+
+            sub.feedback = {
+                rating,
+                comment,
+                updatedAt: new Date().toISOString(),
+                trainerName: 'Entrenador VíCCAN'
+            };
+
+            await saveSubmissionRecord(sub);
+            renderAdminDashboard();
+            showToast(`Retroalimentación guardada para ${sub.studentName}.`, '✅');
+        }
+
+        function renderAdminStudents() {
+            const container = document.getElementById('admin-students-list');
+            const students = Object.values(usersMap);
+
+            if (students.length === 0) {
+                container.innerHTML = `
+                    <div class="md:col-span-2 bg-white border border-stone-200 rounded-2xl p-8 text-center text-stone-500">
+                        Aún no hay alumnos registrados.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = students.map(u => {
+                const userSubs = Object.values(submissionsMap).filter(s => s.userId === u.id);
+                const completedCount = userSubs.filter(s => s.completed).length;
+                const videosCount = userSubs.filter(s => s.videoUrl && isValidHttpUrl(s.videoUrl)).length;
+                const reviewedCount = userSubs.filter(s => s.feedback && s.feedback.comment).length;
+
+                return `
+                    <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between gap-4">
+                        <div>
+                            <div class="flex items-center justify-between gap-2">
+                                <h4 class="font-extrabold text-stone-800 text-base">
+                                    👤 ${escapeHtml(u.studentName)} & 🐶 ${escapeHtml(u.dogName)}
+                                </h4>
+                                <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-teal-50 text-teal-700">
+                                    ${completedCount} / ${exercises.length}
+                                </span>
+                            </div>
+                            <p class="text-xs text-stone-400 mt-1">Usuario: ${escapeHtml(u.identifier)}</p>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-stone-600 bg-stone-50 px-3.5 py-2.5 rounded-xl">
+                            <span>🎥 Videos: <strong>${videosCount}</strong></span>
+                            <span>✅ Revisados: <strong>${reviewedCount}</strong></span>
+                            <button onclick="filterVideosByStudent('${escapeHtml(u.id)}')" class="font-bold text-teal-700 hover:underline">
+                                Ver videos →
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterVideosByStudent(userId) {
+            const name = usersMap[userId]?.studentName || '';
+            setAdminSection('videos');
+            setAdminVideoFilter('all');
+            document.getElementById('admin-search').value = name;
+            renderAdminVideos();
+        }
+
+        /**
+         * Herramientas de Respaldo y Hash para Admin
+         */
+        function exportAllData() {
+            const payload = {
+                exportedAt: new Date().toISOString(),
+                users: usersMap,
+                submissions: submissionsMap
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `viccan-respaldo-${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Respaldo descargado.', '💾');
+        }
+
+        function importAllData(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    if (data.users) {
+                        for (const u of Object.values(data.users)) {
+                            await saveUserRecord(u);
+                        }
+                    }
+                    if (data.submissions) {
+                        for (const s of Object.values(data.submissions)) {
+                            await saveSubmissionRecord(s);
+                        }
+                    }
+                    renderAdminDashboard();
+                    showToast('Respaldo importado correctamente.', '✅');
+                } catch (err) {
+                    console.error(err);
+                    showToast('El archivo JSON no tiene el formato válido.', '❌');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        async function generateAdminHashTool() {
+            const val = document.getElementById('new-admin-pass-input').value;
+            if (!val) {
+                showToast('Escribe una contraseña primero.', '⚠️');
+                return;
+            }
+            const hash = await sha256(val);
+            const box = document.getElementById('generated-hash-box');
+            box.textContent = `const ADMIN_PASSWORD_HASH = '${hash}';`;
+            box.classList.remove('hidden');
+        }
+
+        /**
+         * =========================================================================
+         * TEMPORIZADOR DE SESIÓN CORTA
+         * =========================================================================
+         */
+        function setTimer(seconds) {
+            stopTimer();
+            timerSeconds = seconds;
+            initialTimerSeconds = seconds;
+            updateTimerDisplay();
+        }
+
+        function toggleTimer() {
+            if (isTimerRunning) {
+                stopTimer();
+            } else {
+                if (timerSeconds <= 0) {
+                    timerSeconds = initialTimerSeconds;
+                }
+                isTimerRunning = true;
+                const btn = document.getElementById('timer-toggle-btn');
+                btn.textContent = 'Pausar';
+                btn.classList.replace('bg-teal-600', 'bg-amber-500');
+                btn.classList.replace('hover:bg-teal-700', 'hover:bg-amber-600');
+
+                timerInterval = setInterval(() => {
+                    timerSeconds--;
+                    updateTimerDisplay();
+                    if (timerSeconds <= 0) {
+                        stopTimer();
+                        showToast('¡Tiempo cumplido! Dale un descanso y mucho juego a tu perro.', '⏰');
+                    }
+                }, 1000);
+            }
+        }
+
+        function stopTimer() {
+            isTimerRunning = false;
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            const btn = document.getElementById('timer-toggle-btn');
+            if (btn) {
+                btn.textContent = 'Iniciar';
+                btn.classList.replace('bg-amber-500', 'bg-teal-600');
+                btn.classList.replace('hover:bg-amber-600', 'hover:bg-teal-700');
+            }
+        }
+
+        function resetTimer() {
+            stopTimer();
+            timerSeconds = initialTimerSeconds;
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+            const secs = String(timerSeconds % 60).padStart(2, '0');
+            const el = document.getElementById('timer-display');
+            if (el) el.textContent = `${mins}:${secs}`;
+        }
+
+        /**
+         * =========================================================================
+         * MODAL DE REPORTE WHATSAPP / MENSAJE
+         * =========================================================================
+         */
+        function openSummaryModal() {
+            const student = document.getElementById('student-name').value.trim() || currentSession?.studentName || 'Alumno';
+            const dog = document.getElementById('dog-name').value.trim() || currentSession?.dogName || 'mi perro';
+            const today = new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'long' });
+
+            const doneList = exercises.filter(ex => {
+                const sub = getStudentSubmission(ex.id);
+                return Boolean(sub && sub.completed);
+            });
+
+            let text = `🐾 *VíCCAN - Reporte de Entrenamiento en Casa* (${today})\n`;
+            text += `👤 Alumno: ${student} | 🐶 Perro: ${dog}\n\n`;
+
+            if (doneList.length === 0) {
+                text += `Aún no he marcado ejercicios completados. Marca al menos uno en la lista antes de enviar tu reporte.`;
+            } else {
+                text += `✅ *Ejercicios practicados hoy (${doneList.length}):*\n`;
+                doneList.forEach((ex, i) => {
+                    const sub = getStudentSubmission(ex.id);
+                    text += `${i + 1}. ${ex.title} (${ex.category})\n`;
+                    if (sub?.videoUrl) {
+                        text += `   🎥 Video: ${sub.videoUrl}\n`;
+                    }
+                });
+                text += `\n🎥 ¡Listo para recibir tu retroalimentación!`;
+            }
+
+            document.getElementById('summary-textarea').value = text;
+            const modal = document.getElementById('summary-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeSummaryModal() {
+            const modal = document.getElementById('summary-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function copySummary() {
+            const textarea = document.getElementById('summary-textarea');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showToast('¡Reporte copiado! Pégalo en tu chat junto con tus videos.', '📋');
+                    closeSummaryModal();
+                } else {
+                    showToast('Selecciona el texto y cópialo manualmente.', '⚠️');
+                }
+            } catch (err) {
+                showToast('No se pudo copiar automáticamente.', '⚠️');
+            }
+        }
+
+        /**
+         * =========================================================================
+         * UTILIDADES (SEGURIDAD, TOAST, FECHAS Y SHA-256)
+         * =========================================================================
+         */
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function isValidHttpUrl(str) {
+            try {
+                const u = new URL(str);
+                return u.protocol === 'http:' || u.protocol === 'https:';
+            } catch {
+                return false;
+            }
+        }
+
+        function formatDate(isoStr) {
+            if (!isoStr) return '';
+            try {
+                return new Date(isoStr).toLocaleString('es-MX', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch {
+                return '';
+            }
+        }
+
+        let toastTimeout = null;
+        function showToast(message, icon = '🐾') {
+            const container = document.getElementById('toast-container');
+            document.getElementById('toast-text').textContent = message;
+            document.getElementById('toast-icon').textContent = icon;
+
+            container.classList.remove('opacity-0', 'translate-y-4');
+            container.classList.add('opacity-100', 'translate-y-0');
+
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                container.classList.remove('opacity-100', 'translate-y-0');
+                container.classList.add('opacity-0', 'translate-y-4');
+            }, 3200);
+        }
+
+        /**
+         * SHA-256 con Web Crypto API y respaldo puro en JS para entornos file://
+         */
+        async function sha256(message) {
+            if (window.crypto && window.crypto.subtle) {
+                const msgBuffer = new TextEncoder().encode(message);
+                const hashBuffer = await window.crypto.subtle.digest('SHA-256', msgBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+            return sha256Fallback(message);
+        }
+
+        function sha256Fallback(ascii) {
+            // Codificar UTF-8 a bytes ASCII-safe
+            const str = unescape(encodeURIComponent(ascii));
+            function rightRotate(value, amount) {
+                return (value >>> amount) | (value << (32 - amount));
+            }
+            const mathPow = Math.pow;
+            const maxWord = mathPow(2, 32);
+            const lengthProperty = 'length';
+            let i, j;
+            let result = '';
+            const words = [];
+            const asciiBitLength = str[lengthProperty] * 8;
+
+            const hash = sha256Fallback.h = sha256Fallback.h || [];
+            const k = sha256Fallback.k = sha256Fallback.k || [];
+            let primeCounter = k[lengthProperty];
+            const isComposite = {};
+            for (let candidate = 2; primeCounter < 64; candidate++) {
+                if (!isComposite[candidate]) {
+                    for (i = 0; i < 313; i += candidate) {
+                        isComposite[i] = candidate;
+                    }
+                    hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
+                    k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+                }
+            }
+
+            let padded = str + '\x80';
+            while (padded[lengthProperty] % 64 - 56) padded += '\x00';
+            for (i = 0; i < padded[lengthProperty]; i++) {
+                j = padded.charCodeAt(i);
+                if (j >> 8) return '';
+                words[i >> 2] |= j << ((3 - i) % 4) * 8;
+            }
+            words[words[lengthProperty]] = ((asciiBitLength / maxWord) | 0);
+            words[words[lengthProperty]] = (asciiBitLength);
+
+            const workingHash = hash.slice(0, 8);
+            for (j = 0; j < words[lengthProperty];) {
+                const w = words.slice(j, j += 16);
+                const oldHash = workingHash.slice(0);
+                for (i = 0; i < 64; i++) {
+                    const w15 = w[i - 15], w2 = w[i - 2];
+                    const a = workingHash[0], e = workingHash[4];
+                    const temp1 = workingHash[7]
+                        + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25))
+                        + ((e & workingHash[5]) ^ ((~e) & workingHash[6]))
+                        + k[i]
+                        + (w[i] = (i < 16) ? w[i] : (
+                            w[i - 16]
+                            + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3))
+                            + w[i - 7]
+                            + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))
+                        ) | 0);
+                    const temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22))
+                        + ((a & workingHash[1]) ^ (a & workingHash[2]) ^ (workingHash[1] & workingHash[2]));
+
+                    workingHash.unshift((temp1 + temp2) | 0);
+                    workingHash[4] = (workingHash[4] + temp1) | 0;
+                    workingHash.pop();
+                }
+                for (i = 0; i < 8; i++) {
+                    workingHash[i] = (workingHash[i] + oldHash[i]) | 0;
+                }
+            }
+
+            for (i = 0; i < 8; i++) {
+                for (j = 3; j + 1; j--) {
+                    const b = (workingHash[i] >> (j * 8)) & 255;
+                    result += ((b < 16) ? '0' : '') + b.toString(16);
+                }
+            }
+            return result;
+        }
+    </script>
+</body>
+</html>
