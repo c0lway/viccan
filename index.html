@@ -10,6 +10,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Identity Services para inicio de sesión y registro con Google -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script>
         tailwind.config = {
             theme: {
@@ -56,10 +58,6 @@
                 </div>
                 <h1 class="text-2xl font-extrabold tracking-tight">VíCCAN</h1>
                 <p class="text-emerald-100 text-sm mt-1">Entrenamiento Canino en Casa</p>
-                <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/15 text-emerald-50">
-                    <span id="auth-storage-dot" class="w-2 h-2 rounded-full bg-amber-300"></span>
-                    <span id="auth-storage-label">Modo Local</span>
-                </div>
             </div>
 
             <!-- Pestañas de acceso -->
@@ -79,6 +77,22 @@
             <div class="p-6 sm:p-7">
                 <!-- Formulario: Ingresar Alumno -->
                 <form id="form-login" onsubmit="handleStudentLogin(event)" class="space-y-4">
+                    <button type="button" onclick="handleGoogleAuthClick('login')" class="w-full bg-white hover:bg-stone-50 active:scale-[0.99] text-stone-700 border border-stone-300 font-bold text-sm py-2.5 px-4 rounded-xl transition shadow-sm flex items-center justify-center gap-2.5">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/>
+                            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24Z"/>
+                            <path fill="#FBBC05" d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14Z"/>
+                            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96Z"/>
+                        </svg>
+                        <span>Iniciar sesión con Google</span>
+                    </button>
+
+                    <div class="relative flex items-center py-1">
+                        <div class="flex-grow border-t border-stone-200"></div>
+                        <span class="shrink mx-3 text-[11px] font-semibold uppercase tracking-wider text-stone-400">o con tu usuario</span>
+                        <div class="flex-grow border-t border-stone-200"></div>
+                    </div>
+
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1.5">Usuario o correo</label>
                         <input type="text" id="login-identifier" required placeholder="ej. ana@correo.com o ana_max" class="w-full px-4 py-2.5 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition">
@@ -90,13 +104,36 @@
                     <button type="submit" id="btn-login-submit" class="w-full bg-teal-600 hover:bg-teal-700 active:scale-[0.99] text-white font-bold py-3 px-4 rounded-xl transition shadow-sm">
                         Entrar a mi rutina 🐾
                     </button>
-                    <p class="text-xs text-stone-400 text-center">
-                        ¿Primera vez aquí? Da clic en <strong>"Soy nuevo"</strong> arriba para crear tu cuenta.
-                    </p>
+
+                    <!-- Aviso resaltado para nuevos alumnos -->
+                    <div onclick="switchAuthTab('register')" role="button" tabindex="0" class="cursor-pointer bg-amber-50 hover:bg-amber-100/80 border-2 border-amber-300 rounded-2xl p-3.5 text-center transition shadow-sm">
+                        <p class="text-xs sm:text-sm text-amber-950 font-bold">
+                            ✨ ¿Primera vez aquí?
+                        </p>
+                        <p class="text-xs sm:text-sm font-extrabold text-teal-700 underline mt-0.5">
+                            Da clic en "Soy nuevo" arriba para crear tu cuenta →
+                        </p>
+                    </div>
                 </form>
 
                 <!-- Formulario: Registro Alumno -->
                 <form id="form-register" onsubmit="handleStudentRegister(event)" class="space-y-3.5 hidden">
+                    <button type="button" onclick="handleGoogleAuthClick('register')" class="w-full bg-white hover:bg-stone-50 active:scale-[0.99] text-stone-700 border border-stone-300 font-bold text-sm py-2.5 px-4 rounded-xl transition shadow-sm flex items-center justify-center gap-2.5">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/>
+                            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24Z"/>
+                            <path fill="#FBBC05" d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14Z"/>
+                            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96Z"/>
+                        </svg>
+                        <span>Crear cuenta con Google</span>
+                    </button>
+
+                    <div class="relative flex items-center py-0.5">
+                        <div class="flex-grow border-t border-stone-200"></div>
+                        <span class="shrink mx-3 text-[11px] font-semibold uppercase tracking-wider text-stone-400">o regístrate manualmente</span>
+                        <div class="flex-grow border-t border-stone-200"></div>
+                    </div>
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1">Tu nombre</label>
@@ -202,6 +239,9 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
                             <span>Preparar reporte para enviar</span>
                         </button>
+                        <button onclick="setStudentTab('dashboard')" class="mt-2 w-full bg-white/15 hover:bg-white/25 text-white font-semibold text-xs py-2 px-3 rounded-xl transition">
+                            📊 Ver mi Dashboard de Progreso
+                        </button>
                     </div>
                 </div>
             </div>
@@ -211,6 +251,19 @@
         <!-- VISTA DE ALUMNO                                       -->
         <!-- ===================================================== -->
         <main id="student-view" class="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex-1 w-full space-y-6">
+
+            <!-- Pestañas principales del Alumno: Ejercicios vs Dashboard -->
+            <section class="bg-white border border-stone-200 rounded-2xl p-2 shadow-sm flex flex-wrap gap-2">
+                <button onclick="setStudentTab('exercises')" id="student-nav-exercises" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-sm font-bold bg-teal-700 text-white transition">
+                    🏋️ Rutina de Ejercicios (10)
+                </button>
+                <button onclick="setStudentTab('dashboard')" id="student-nav-dashboard" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-sm font-semibold bg-stone-100 text-stone-700 hover:bg-stone-200 transition">
+                    📊 Mi Dashboard de Progreso
+                </button>
+            </section>
+
+            <!-- Contenido Tab 1: Ejercicios -->
+            <div id="student-tab-exercises" class="space-y-6">
 
             <!-- Sección: Tips para grabar el video + Temporizador de sesión -->
             <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -309,6 +362,12 @@
             <section id="exercises-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <!-- Los ejercicios se renderizan dinámicamente con JavaScript -->
             </section>
+            </div>
+
+            <!-- Contenido Tab 2: Dashboard de Progreso del Cliente -->
+            <section id="student-tab-dashboard" class="hidden space-y-6">
+                <!-- Renderizado dinámico por buildClientProgressDashboardHtml -->
+            </section>
         </main>
 
         <!-- ===================================================== -->
@@ -376,10 +435,13 @@
                 </div>
             </section>
 
-            <!-- Sub-sección 2: Alumnos registrados -->
+            <!-- Sub-sección 2: Alumnos registrados y su Dashboard de Progreso -->
             <section id="admin-section-students" class="hidden space-y-4">
                 <div id="admin-students-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Lista de alumnos -->
+                </div>
+                <div id="admin-client-dashboard-panel" class="hidden space-y-4">
+                    <!-- Dashboard detallado del cliente seleccionado -->
                 </div>
             </section>
 
@@ -404,6 +466,18 @@
                         </div>
                         <p class="text-xs text-stone-400">
                             Para que funcione para todos tus alumnos en GitHub Pages, pega esa misma URL en la constante <code class="bg-stone-100 px-1 rounded">APPS_SCRIPT_URL</code> dentro de <code class="bg-stone-100 px-1 rounded">index.html</code> y súbelo a GitHub.
+                        </p>
+                    </div>
+                    <div class="pt-3 border-t border-stone-200 space-y-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-stone-500">Probar Google OAuth Client ID en este navegador (para botón "Con Google"):</label>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <input type="text" id="test-google-client-id" placeholder="1234567890-xxxx.apps.googleusercontent.com" class="flex-1 px-3.5 py-2 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <button onclick="saveTestGoogleClientId()" class="bg-stone-800 hover:bg-stone-900 text-white font-semibold text-sm px-4 py-2 rounded-xl transition">
+                                Guardar Client ID
+                            </button>
+                        </div>
+                        <p class="text-xs text-stone-400">
+                            Para activarlo para todos tus alumnos, pega el ID en la constante <code class="bg-stone-100 px-1 rounded">GOOGLE_CLIENT_ID</code> dentro de <code class="bg-stone-100 px-1 rounded">index.html</code>.
                         </p>
                     </div>
                 </div>
@@ -504,6 +578,28 @@
         </div>
     </div>
 
+    <!-- Modal rápido para pedir el nombre del perro la primera vez que entra con Google -->
+    <div id="google-dog-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-900/60 backdrop-blur-sm p-4">
+        <form onsubmit="completeGoogleDogName(event)" class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-fade-in">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-teal-100 text-teal-700 flex items-center justify-center text-2xl shrink-0">
+                    🐶
+                </div>
+                <div>
+                    <h3 class="text-lg font-extrabold text-stone-800">¡Último paso!</h3>
+                    <p id="google-dog-welcome" class="text-xs text-stone-500">Bienvenido(a) con Google</p>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1.5">¿Cómo se llama tu perro?</label>
+                <input type="text" id="google-dog-name-input" required placeholder="ej. Max, Luna, Toby..." class="w-full px-4 py-2.5 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white">
+            </div>
+            <button type="submit" id="btn-google-dog-submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl transition shadow-sm">
+                Guardar y entrar a mi rutina 🚀
+            </button>
+        </form>
+    </div>
+
     <script>
         /**
          * =========================================================================
@@ -515,6 +611,7 @@
          *    Si se deja vacío (""), la app funciona en Modo Local (este navegador).
          */
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyOF-bQ-8ga7s7nh7S5no3oZX_2AyAgD4fPXUDGM2PAxcM7ucUxHzhLuF703iaU1YFd/exec';
+        const GOOGLE_CLIENT_ID = ''; // <-- Pega aquí tu OAuth Client ID de Google para activar "Con Google"
 
         /**
          * 2. Credenciales de respaldo únicamente para Modo Local (cuando APPS_SCRIPT_URL
@@ -531,6 +628,7 @@
         const LS_SUBMISSIONS_KEY = 'viccan_submissions_v1';
         const LS_SESSION_KEY = 'viccan_session_v1';
         const LS_OVERRIDE_SCRIPT_URL = 'viccan_apps_script_url';
+        const LS_OVERRIDE_GOOGLE_CLIENT_ID = 'viccan_google_client_id';
 
         /**
          * Base de datos de ejercicios de entrenamiento canino en casa.
@@ -695,9 +793,11 @@
         let pendingDeleteSubId = null;
 
         let activeCategory = 'Todos';
+        let studentActiveTab = 'exercises'; // 'exercises' | 'dashboard'
         let adminPreviewStudentView = false;
         let adminVideoFilter = 'pending'; // 'pending' | 'active_all' | 'reviewed' | 'history'
         let adminCurrentSection = 'videos';
+        let adminSelectedClientId = null;
 
         // Estado del temporizador
         let timerSeconds = 180;
@@ -711,6 +811,11 @@
         function getScriptUrl() {
             const localOverride = localStorage.getItem(LS_OVERRIDE_SCRIPT_URL) || '';
             return (APPS_SCRIPT_URL || localOverride || '').trim();
+        }
+
+        function getGoogleClientId() {
+            const localOverride = localStorage.getItem(LS_OVERRIDE_GOOGLE_CLIENT_ID) || '';
+            return (GOOGLE_CLIENT_ID || localOverride || '').trim();
         }
 
         function isCloudDriveActive() {
@@ -740,11 +845,10 @@
 
         function updateStorageIndicators() {
             const active = isCloudDriveActive();
-            const label = active ? 'Google Drive + Sheets activo' : 'Modo Local (navegador)';
-            const dotClass = active ? 'w-2 h-2 rounded-full bg-emerald-300' : 'w-2 h-2 rounded-full bg-amber-300';
-            document.getElementById('auth-storage-label').textContent = label;
-            document.getElementById('auth-storage-dot').className = dotClass;
-            document.getElementById('header-storage-pill').textContent = active ? '☁️ Google Drive' : '💾 Local';
+            const pill = document.getElementById('header-storage-pill');
+            if (pill) {
+                pill.textContent = active ? '☁️ Google Drive' : '💾 Local';
+            }
         }
 
         /**
@@ -971,6 +1075,109 @@
             }
         }
 
+        function handleGoogleAuthClick(mode) {
+            const clientId = getGoogleClientId();
+            if (!clientId) {
+                showToast('Falta configurar GOOGLE_CLIENT_ID en index.html (o usa el registro manual).', '⚠️');
+                return;
+            }
+            if (!window.google || !google.accounts || !google.accounts.oauth2) {
+                showToast('Aún se está cargando el servicio de Google. Intenta de nuevo en un segundo.', '⏳');
+                return;
+            }
+
+            const tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: clientId,
+                scope: 'openid email profile',
+                callback: async (tokenResponse) => {
+                    if (!tokenResponse || !tokenResponse.access_token) {
+                        showToast('No se completó el acceso con Google.', '⚠️');
+                        return;
+                    }
+                    await processGoogleAccessToken(tokenResponse.access_token, mode);
+                }
+            });
+            tokenClient.requestAccessToken({ prompt: mode === 'register' ? 'select_account' : '' });
+        }
+
+        async function processGoogleAccessToken(accessToken, mode) {
+            try {
+                if (!isCloudDriveActive()) {
+                    throw new Error('Configura APPS_SCRIPT_URL para validar cuentas con Google.');
+                }
+
+                showToast('Conectando con tu cuenta de Google...', '⏳');
+                const res = await callAppsScript({
+                    action: 'authWithGoogle',
+                    accessToken
+                });
+
+                const sMap = {};
+                (res.submissions || []).forEach(s => { sMap[s.id] = s; });
+                submissionsMap = sMap;
+
+                currentSession = {
+                    role: 'student',
+                    userId: res.user.id,
+                    studentName: res.user.studentName,
+                    dogName: res.user.dogName || '',
+                    identifier: res.user.identifier,
+                    passwordHash: res.authToken,
+                    authProvider: 'google'
+                };
+                localStorage.setItem(LS_SESSION_KEY, JSON.stringify(currentSession));
+
+                if (res.needsDogName) {
+                    document.getElementById('google-dog-welcome').textContent = `Hola, ${res.user.studentName} (${res.user.identifier})`;
+                    document.getElementById('google-dog-name-input').value = '';
+                    const modal = document.getElementById('google-dog-modal');
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                    return;
+                }
+
+                showToast(`¡Bienvenido(a), ${res.user.studentName}!`, '🐾');
+                await enterApp();
+            } catch (err) {
+                console.error(err);
+                showToast(err.message || 'No se pudo iniciar sesión con Google.', '❌');
+            }
+        }
+
+        async function completeGoogleDogName(e) {
+            e.preventDefault();
+            if (!currentSession) return;
+            const dogName = document.getElementById('google-dog-name-input').value.trim();
+            if (!dogName) return;
+
+            const btn = document.getElementById('btn-google-dog-submit');
+            btn.disabled = true;
+            btn.textContent = 'Guardando...';
+
+            try {
+                await callAppsScript({
+                    action: 'saveProfile',
+                    userId: currentSession.userId,
+                    passwordHash: currentSession.passwordHash,
+                    studentName: currentSession.studentName,
+                    dogName
+                });
+                currentSession.dogName = dogName;
+                localStorage.setItem(LS_SESSION_KEY, JSON.stringify(currentSession));
+
+                const modal = document.getElementById('google-dog-modal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                showToast(`¡Listo, ${currentSession.studentName} y ${dogName}!`, '🎉');
+                await enterApp();
+            } catch (err) {
+                showToast(err.message || 'No se pudo guardar el nombre de tu perro.', '❌');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Guardar y entrar a mi rutina 🚀';
+            }
+        }
+
         async function handleAdminLogin(e) {
             e.preventDefault();
             const username = document.getElementById('admin-username').value.trim().toLowerCase();
@@ -1037,6 +1244,8 @@
             stopTimer();
             currentSession = null;
             adminPreviewStudentView = false;
+            adminSelectedClientId = null;
+            studentActiveTab = 'exercises';
             localStorage.removeItem(LS_SESSION_KEY);
             showAuthScreen();
             showToast('Sesión cerrada correctamente.', '👋');
@@ -1082,6 +1291,9 @@
                     await loadStudentSubmissions();
                     renderExercises();
                     updateProgressUI();
+                    if (studentActiveTab === 'dashboard') {
+                        renderStudentDashboard();
+                    }
                 }
                 showToast('Datos actualizados.', '🔄');
             } catch (err) {
@@ -1111,8 +1323,49 @@
             document.getElementById('student-name').value = currentSession.studentName || '';
             document.getElementById('dog-name').value = currentSession.dogName || '';
 
+            setStudentTab(studentActiveTab || 'exercises');
             renderExercises();
             updateProgressUI();
+        }
+
+        function setStudentTab(tab) {
+            studentActiveTab = tab;
+            const exBtn = document.getElementById('student-nav-exercises');
+            const dbBtn = document.getElementById('student-nav-dashboard');
+            const exPanel = document.getElementById('student-tab-exercises');
+            const dbPanel = document.getElementById('student-tab-dashboard');
+
+            if (tab === 'dashboard') {
+                dbBtn.className = 'flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-sm font-bold bg-teal-700 text-white transition';
+                exBtn.className = 'flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-sm font-semibold bg-stone-100 text-stone-700 hover:bg-stone-200 transition';
+                exPanel.classList.add('hidden');
+                dbPanel.classList.remove('hidden');
+                renderStudentDashboard();
+            } else {
+                exBtn.className = 'flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-sm font-bold bg-teal-700 text-white transition';
+                dbBtn.className = 'flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-sm font-semibold bg-stone-100 text-stone-700 hover:bg-stone-200 transition';
+                dbPanel.classList.add('hidden');
+                exPanel.classList.remove('hidden');
+            }
+        }
+
+        function renderStudentDashboard() {
+            if (!currentSession) return;
+            const container = document.getElementById('student-tab-dashboard');
+            const userSubs = exercises
+                .map(ex => submissionsMap[getSubmissionKey(currentSession.userId, ex.id)])
+                .filter(Boolean);
+
+            container.innerHTML = buildClientProgressDashboardHtml(
+                {
+                    id: currentSession.userId,
+                    studentName: currentSession.studentName,
+                    dogName: currentSession.dogName,
+                    identifier: currentSession.identifier
+                },
+                userSubs,
+                { isAdminView: false }
+            );
         }
 
         function renderAppForAdmin() {
@@ -1969,11 +2222,25 @@
         }
 
         function renderAdminStudents() {
-            const container = document.getElementById('admin-students-list');
-            const students = Object.values(usersMap);
+            const listEl = document.getElementById('admin-students-list');
+            const panelEl = document.getElementById('admin-client-dashboard-panel');
 
+            if (adminSelectedClientId && usersMap[adminSelectedClientId]) {
+                listEl.classList.add('hidden');
+                panelEl.classList.remove('hidden');
+                const client = usersMap[adminSelectedClientId];
+                const clientSubs = Object.values(submissionsMap).filter(s => s.userId === client.id);
+                panelEl.innerHTML = buildClientProgressDashboardHtml(client, clientSubs, { isAdminView: true });
+                return;
+            }
+
+            adminSelectedClientId = null;
+            panelEl.classList.add('hidden');
+            listEl.classList.remove('hidden');
+
+            const students = Object.values(usersMap);
             if (students.length === 0) {
-                container.innerHTML = `
+                listEl.innerHTML = `
                     <div class="md:col-span-2 bg-white border border-stone-200 rounded-2xl p-8 text-center text-stone-500">
                         Aún no hay alumnos registrados.
                     </div>
@@ -1981,9 +2248,10 @@
                 return;
             }
 
-            container.innerHTML = students.map(u => {
+            listEl.innerHTML = students.map(u => {
                 const userSubs = Object.values(submissionsMap).filter(s => s.userId === u.id);
                 const completedCount = userSubs.filter(s => s.completed).length;
+                const pct = Math.round((completedCount / exercises.length) * 100);
                 const videosCount = userSubs.filter(s => s.videoUrl && s.videoStatus !== 'deleted').length;
                 const reviewedCount = userSubs.filter(s => s.feedback && s.feedback.comment).length;
 
@@ -1992,24 +2260,224 @@
                         <div>
                             <div class="flex items-center justify-between gap-2">
                                 <h4 class="font-extrabold text-stone-800 text-base">
-                                    👤 ${escapeHtml(u.studentName)} & 🐶 ${escapeHtml(u.dogName)}
+                                    👤 ${escapeHtml(u.studentName)} & 🐶 ${escapeHtml(u.dogName || 'Sin nombre')}
                                 </h4>
                                 <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-teal-50 text-teal-700">
-                                    ${completedCount} / ${exercises.length}
+                                    ${completedCount} / ${exercises.length} (${pct}%)
                                 </span>
                             </div>
                             <p class="text-xs text-stone-400 mt-1">Usuario: ${escapeHtml(u.identifier)}</p>
+                            <div class="w-full bg-stone-100 rounded-full h-2 overflow-hidden mt-3">
+                                <div class="bg-teal-600 h-2 rounded-full transition-all" style="width: ${pct}%"></div>
+                            </div>
                         </div>
-                        <div class="flex items-center justify-between text-xs text-stone-600 bg-stone-50 px-3.5 py-2.5 rounded-xl">
-                            <span>🎥 Videos activos: <strong>${videosCount}</strong></span>
-                            <span>✅ Revisados: <strong>${reviewedCount}</strong></span>
-                            <button onclick="filterVideosByStudent('${escapeHtml(u.id)}')" class="font-bold text-teal-700 hover:underline">
-                                Ver historial →
-                            </button>
+                        <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-stone-600 bg-stone-50 px-3.5 py-2.5 rounded-xl">
+                            <div class="flex items-center gap-3">
+                                <span>🎥 Videos: <strong>${videosCount}</strong></span>
+                                <span>✅ Revisados: <strong>${reviewedCount}</strong></span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="openAdminClientDashboard('${escapeHtml(u.id)}')" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-3 py-1.5 rounded-lg transition">
+                                    📊 Ver Dashboard
+                                </button>
+                                <button onclick="filterVideosByStudent('${escapeHtml(u.id)}')" class="font-bold text-stone-700 hover:text-teal-700 px-2 py-1.5">
+                                    Videos →
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
             }).join('');
+        }
+
+        function openAdminClientDashboard(userId) {
+            adminSelectedClientId = userId;
+            renderAdminStudents();
+        }
+
+        function closeAdminClientDashboard() {
+            adminSelectedClientId = null;
+            renderAdminStudents();
+        }
+
+        function buildClientProgressDashboardHtml(userObj, userSubs, options = {}) {
+            const isAdminView = Boolean(options.isAdminView);
+            const subByExercise = {};
+            (userSubs || []).forEach(s => { subByExercise[s.exerciseId] = s; });
+
+            const total = exercises.length;
+            const completedList = exercises.filter(ex => Boolean(subByExercise[ex.id]?.completed));
+            const completedCount = completedList.length;
+            const pct = Math.round((completedCount / total) * 100);
+
+            const allUserSubs = Object.values(subByExercise);
+            const totalVideosSent = allUserSubs.filter(s => s.videoUrl || s.videoStatus === 'deleted').length;
+            const reviewedSubs = allUserSubs.filter(s => s.feedback && s.feedback.comment);
+            const pendingReview = allUserSubs.filter(s => s.videoUrl && s.videoStatus !== 'deleted' && !(s.feedback && s.feedback.comment));
+
+            const ratingCounts = {
+                excellent: reviewedSubs.filter(s => s.feedback.rating === 'excellent').length,
+                good: reviewedSubs.filter(s => s.feedback.rating === 'good').length,
+                improve: reviewedSubs.filter(s => s.feedback.rating === 'improve').length
+            };
+
+            let levelBadge = '🌱 Primeros pasos';
+            if (completedCount === total) levelBadge = '🏆 ¡Rutina Completa!';
+            else if (completedCount >= 8) levelBadge = '🔥 Casi maestro';
+            else if (completedCount >= 4) levelBadge = '⭐ Equipo en progreso';
+            else if (completedCount >= 1) levelBadge = '🐾 Tomando ritmo';
+
+            const categories = [
+                { name: 'Obediencia Básica', icon: '🎯', bar: 'bg-teal-600' },
+                { name: 'Autocontrol y Calma', icon: '🧘', bar: 'bg-emerald-600' },
+                { name: 'Olfato y Mente', icon: '👃', bar: 'bg-amber-500' },
+                { name: 'Trucos y Cuerpo', icon: '🐾', bar: 'bg-indigo-600' }
+            ];
+
+            const categoryCardsHtml = categories.map(cat => {
+                const catExercises = exercises.filter(ex => ex.category === cat.name);
+                const catDone = catExercises.filter(ex => Boolean(subByExercise[ex.id]?.completed)).length;
+                const catPct = Math.round((catDone / catExercises.length) * 100);
+                return `
+                    <div class="bg-stone-50 border border-stone-200 rounded-xl p-3.5 space-y-2">
+                        <div class="flex items-center justify-between text-xs sm:text-sm">
+                            <span class="font-bold text-stone-800">${cat.icon} ${escapeHtml(cat.name)}</span>
+                            <span class="font-extrabold text-stone-700">${catDone} / ${catExercises.length} (${catPct}%)</span>
+                        </div>
+                        <div class="w-full bg-stone-200 rounded-full h-2.5 overflow-hidden">
+                            <div class="${cat.bar} h-2.5 rounded-full transition-all duration-500" style="width: ${catPct}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const timelineRowsHtml = exercises.map(ex => {
+                const sub = subByExercise[ex.id];
+                const isDone = Boolean(sub?.completed);
+                const hasFb = Boolean(sub?.feedback?.comment);
+                const ratingMeta = hasFb ? getFeedbackRatingMeta(sub.feedback.rating) : null;
+                let statusBadge = '<span class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-stone-100 text-stone-500">Pendiente</span>';
+                if (hasFb) {
+                    statusBadge = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-md border ${ratingMeta.cls}">${ratingMeta.label}</span>`;
+                } else if (sub?.videoUrl && sub.videoStatus !== 'deleted') {
+                    statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800">⏳ En revisión</span>';
+                } else if (isDone) {
+                    statusBadge = '<span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">✓ Completado</span>';
+                }
+
+                return `
+                    <div class="border border-stone-200 rounded-xl p-3.5 bg-white space-y-2">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                                <p class="text-sm font-bold text-stone-800">${isDone ? '✅' : '○'} ${escapeHtml(ex.title)}</p>
+                                <p class="text-xs text-stone-400">${escapeHtml(ex.category)} · ${escapeHtml(ex.level)}</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                ${statusBadge}
+                                ${sub?.submittedAt ? `<span class="text-[11px] text-stone-400">${formatDate(sub.submittedAt)}</span>` : ''}
+                            </div>
+                        </div>
+                        ${sub?.studentNote ? `<p class="text-xs text-stone-600 bg-stone-50 rounded-lg px-3 py-1.5">Nota del alumno: "${escapeHtml(sub.studentNote)}"</p>` : ''}
+                        ${hasFb ? `
+                            <div class="text-xs text-emerald-950 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                                <span class="font-bold">💬 Entrenador:</span> ${escapeHtml(sub.feedback.comment)}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                ${isAdminView ? `
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <button onclick="closeAdminClientDashboard()" class="bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 font-bold text-sm px-4 py-2 rounded-xl transition">
+                            ← Volver a la lista de alumnos
+                        </button>
+                        <button onclick="filterVideosByStudent('${escapeHtml(userObj.id)}')" class="bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm px-4 py-2 rounded-xl transition">
+                            🎬 Revisar videos de ${escapeHtml(userObj.studentName)}
+                        </button>
+                    </div>
+                ` : ''}
+
+                <!-- Cabecera del Dashboard del Cliente -->
+                <div class="bg-gradient-to-br from-teal-800 to-emerald-800 text-white rounded-3xl p-6 shadow-md">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <span class="inline-block text-xs font-bold px-3 py-1 rounded-full bg-white/15 text-emerald-50 mb-2">
+                                ${levelBadge}
+                            </span>
+                            <h3 class="text-2xl font-extrabold">
+                                👤 ${escapeHtml(userObj.studentName)} & 🐶 ${escapeHtml(userObj.dogName || 'Tu perro')}
+                            </h3>
+                            <p class="text-xs text-emerald-100/90 mt-1">Cuenta: ${escapeHtml(userObj.identifier || '')}</p>
+                        </div>
+                        <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-5 py-3 text-center shrink-0">
+                            <p class="text-xs uppercase tracking-wider text-emerald-100 font-semibold">Avance Total</p>
+                            <p class="text-3xl font-extrabold text-amber-300">${pct}%</p>
+                            <p class="text-xs text-emerald-100">${completedCount} de ${total} ejercicios</p>
+                        </div>
+                    </div>
+                    <div class="w-full bg-teal-950/50 rounded-full h-3 overflow-hidden mt-4">
+                        <div class="bg-amber-400 h-3 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+                    </div>
+                </div>
+
+                <!-- Métricas Clave -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm">
+                        <p class="text-xs font-bold uppercase tracking-wider text-stone-400">Completados</p>
+                        <p class="text-2xl font-extrabold text-stone-800 mt-1">${completedCount} / ${total}</p>
+                    </div>
+                    <div class="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm">
+                        <p class="text-xs font-bold uppercase tracking-wider text-stone-400">Videos enviados</p>
+                        <p class="text-2xl font-extrabold text-teal-700 mt-1">${totalVideosSent}</p>
+                    </div>
+                    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 shadow-sm">
+                        <p class="text-xs font-bold uppercase tracking-wider text-amber-700">En revisión</p>
+                        <p class="text-2xl font-extrabold text-amber-800 mt-1">${pendingReview.length}</p>
+                    </div>
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 shadow-sm">
+                        <p class="text-xs font-bold uppercase tracking-wider text-emerald-700">Retroalimentados</p>
+                        <p class="text-2xl font-extrabold text-emerald-800 mt-1">${reviewedSubs.length}</p>
+                    </div>
+                </div>
+
+                <!-- Progreso por Categoría + Evaluaciones -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    <div class="lg:col-span-2 bg-white border border-stone-200 rounded-2xl p-5 shadow-sm space-y-3">
+                        <h4 class="font-extrabold text-stone-800 text-base">📈 Progreso por Área de Entrenamiento</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            ${categoryCardsHtml}
+                        </div>
+                    </div>
+
+                    <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm space-y-3">
+                        <h4 class="font-extrabold text-stone-800 text-base">🏅 Evaluaciones del Entrenador</h4>
+                        <div class="space-y-2.5 text-sm">
+                            <div class="flex items-center justify-between bg-emerald-50 border border-emerald-200 px-3.5 py-2.5 rounded-xl">
+                                <span class="font-semibold text-emerald-900">🌟 ¡Excelente!</span>
+                                <span class="font-extrabold text-emerald-800">${ratingCounts.excellent}</span>
+                            </div>
+                            <div class="flex items-center justify-between bg-teal-50 border border-teal-200 px-3.5 py-2.5 rounded-xl">
+                                <span class="font-semibold text-teal-900">👍 Muy bien</span>
+                                <span class="font-extrabold text-teal-800">${ratingCounts.good}</span>
+                            </div>
+                            <div class="flex items-center justify-between bg-amber-50 border border-amber-200 px-3.5 py-2.5 rounded-xl">
+                                <span class="font-semibold text-amber-900">💡 Tips de mejora</span>
+                                <span class="font-extrabold text-amber-800">${ratingCounts.improve}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detalle ejercicio por ejercicio -->
+                <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm space-y-3">
+                    <h4 class="font-extrabold text-stone-800 text-base">📋 Historial y Detalle de Ejercicios</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        ${timelineRowsHtml}
+                    </div>
+                </div>
+            `;
         }
 
         function filterVideosByStudent(userId) {
@@ -2026,6 +2494,21 @@
             const inputEl = document.getElementById('test-apps-script-url');
             statusEl.textContent = url ? `✅ Conectado a: ${url}` : '⚠️ Modo Local (sin URL de Apps Script configurada todavía).';
             if (inputEl && !inputEl.value && url) inputEl.value = url;
+
+            const googleInput = document.getElementById('test-google-client-id');
+            const gId = getGoogleClientId();
+            if (googleInput && !googleInput.value && gId) googleInput.value = gId;
+        }
+
+        function saveTestGoogleClientId() {
+            const val = document.getElementById('test-google-client-id').value.trim();
+            if (!val) {
+                localStorage.removeItem(LS_OVERRIDE_GOOGLE_CLIENT_ID);
+                showToast('Google Client ID eliminado.', 'ℹ️');
+                return;
+            }
+            localStorage.setItem(LS_OVERRIDE_GOOGLE_CLIENT_ID, val);
+            showToast('Google Client ID guardado en este navegador.', '✅');
         }
 
         function saveTestAppsScriptUrl() {
