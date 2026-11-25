@@ -10,9 +10,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Firebase SDK (opcional: solo se activa si configuras FIREBASE_CONFIG abajo) -->
-    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -126,7 +123,7 @@
                 <!-- Formulario: Administrador / Entrenador -->
                 <form id="form-admin" onsubmit="handleAdminLogin(event)" class="space-y-4 hidden">
                     <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900">
-                        <strong>Acceso exclusivo para el entrenador:</strong> revisa los videos enviados por tus alumnos y escribe su retroalimentación.
+                        <strong>Acceso exclusivo para el entrenador:</strong> revisa los videos enviados por tus alumnos, escribe su retroalimentación y respalda o elimina los archivos en Google Drive.
                     </div>
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1.5">Usuario administrador</label>
@@ -136,7 +133,7 @@
                         <label class="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1.5">Contraseña de entrenador</label>
                         <input type="password" id="admin-password" required placeholder="••••••••" class="w-full px-4 py-2.5 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition">
                     </div>
-                    <button type="submit" class="w-full bg-stone-900 hover:bg-stone-800 active:scale-[0.99] text-white font-bold py-3 px-4 rounded-xl transition shadow-sm">
+                    <button type="submit" id="btn-admin-submit" class="w-full bg-stone-900 hover:bg-stone-800 active:scale-[0.99] text-white font-bold py-3 px-4 rounded-xl transition shadow-sm">
                         Ingresar como Administrador 🛡️
                     </button>
                 </form>
@@ -166,7 +163,6 @@
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <!-- Botón exclusivo de Admin para alternar entre Panel y Vista de Ejercicios -->
                         <button id="btn-toggle-admin-preview" onclick="toggleAdminViewMode()" class="hidden bg-white/15 hover:bg-white/25 text-white text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl transition">
                             👁️ Ver ejercicios
                         </button>
@@ -189,7 +185,7 @@
                             Entrenamiento Canino en Casa
                         </h1>
                         <p id="header-desc" class="text-emerald-100 text-sm sm:text-base max-w-xl leading-relaxed">
-                            ¿Hoy no pudieron salir? No importa. Elige 2 o 3 ejercicios, realiza sesiones cortas y divertidas, y pega el enlace de tu video para recibir retroalimentación.
+                            ¿Hoy no pudieron salir? No importa. Elige 2 o 3 ejercicios, realiza sesiones cortas y divertidas, y sube tu video directo desde tu celular para recibir retroalimentación.
                         </p>
                     </div>
 
@@ -218,7 +214,6 @@
 
             <!-- Sección: Tips para grabar el video + Temporizador de sesión -->
             <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <!-- Tips de grabación -->
                 <div class="lg:col-span-2 bg-white border border-stone-200 rounded-2xl p-5 shadow-sm">
                     <div class="flex items-center gap-2.5 mb-3">
                         <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
@@ -229,7 +224,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-sm text-stone-600">
                         <div class="flex items-start gap-2 bg-stone-50 p-2.5 rounded-xl">
                             <span class="text-emerald-600 font-bold">✓</span>
-                            <span><strong>Duración ideal:</strong> Videos cortos de 30 a 60 segundos por ejercicio.</span>
+                            <span><strong>Duración ideal:</strong> Videos cortos de 30 a 60 segundos por ejercicio (máx. 35 MB).</span>
                         </div>
                         <div class="flex items-start gap-2 bg-stone-50 p-2.5 rounded-xl">
                             <span class="text-emerald-600 font-bold">✓</span>
@@ -241,7 +236,7 @@
                         </div>
                         <div class="flex items-start gap-2 bg-stone-50 p-2.5 rounded-xl">
                             <span class="text-emerald-600 font-bold">✓</span>
-                            <span><strong>Enlace del video:</strong> Súbelo a Drive, YouTube (Oculto) o iCloud y pega el link en el ejercicio.</span>
+                            <span><strong>Subida directa:</strong> Selecciona el video desde tu galería y se enviará directo al entrenador.</span>
                         </div>
                     </div>
                 </div>
@@ -282,8 +277,8 @@
                         Tus datos:
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
-                        <input type="text" id="student-name" placeholder="Tu nombre (ej. Ana)" oninput="saveProfile()" class="w-full px-3.5 py-2 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition">
-                        <input type="text" id="dog-name" placeholder="Nombre de tu perro (ej. Max)" oninput="saveProfile()" class="w-full px-3.5 py-2 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition">
+                        <input type="text" id="student-name" placeholder="Tu nombre (ej. Ana)" onchange="saveProfile()" class="w-full px-3.5 py-2 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition">
+                        <input type="text" id="dog-name" placeholder="Nombre de tu perro (ej. Max)" onchange="saveProfile()" class="w-full px-3.5 py-2 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition">
                     </div>
                 </div>
 
@@ -317,7 +312,7 @@
         </main>
 
         <!-- ===================================================== -->
-        <!-- VISTA DE ADMINISTRADOR (RETROALIMENTACIÓN DE VIDEOS)  -->
+        <!-- VISTA DE ADMINISTRADOR (RETROALIMENTACIÓN Y DRIVE)    -->
         <!-- ===================================================== -->
         <main id="admin-view" class="hidden max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex-1 w-full space-y-6">
 
@@ -328,7 +323,7 @@
                     <p id="stat-students" class="text-2xl sm:text-3xl font-extrabold text-stone-800 mt-1">0</p>
                 </div>
                 <div class="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm">
-                    <p class="text-xs font-bold uppercase tracking-wider text-stone-400">Videos enviados</p>
+                    <p class="text-xs font-bold uppercase tracking-wider text-stone-400">Videos en Drive / Link</p>
                     <p id="stat-videos" class="text-2xl sm:text-3xl font-extrabold text-teal-700 mt-1">0</p>
                 </div>
                 <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 shadow-sm">
@@ -336,7 +331,7 @@
                     <p id="stat-pending" class="text-2xl sm:text-3xl font-extrabold text-amber-800 mt-1">0</p>
                 </div>
                 <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 shadow-sm">
-                    <p class="text-xs font-bold uppercase tracking-wider text-emerald-700">Revisados</p>
+                    <p class="text-xs font-bold uppercase tracking-wider text-emerald-700">Revisados (Historial)</p>
                     <p id="stat-reviewed" class="text-2xl sm:text-3xl font-extrabold text-emerald-800 mt-1">0</p>
                 </div>
             </section>
@@ -351,7 +346,7 @@
                         👥 Alumnos registrados
                     </button>
                     <button onclick="setAdminSection('settings')" id="admin-nav-settings" class="px-4 py-2 rounded-xl text-sm font-semibold bg-stone-100 text-stone-700 hover:bg-stone-200 transition">
-                        ⚙️ Nube y Respaldo
+                        ⚙️ Google Drive y Respaldo
                     </button>
                 </div>
             </section>
@@ -363,11 +358,14 @@
                         <button onclick="setAdminVideoFilter('pending')" data-vfilter="pending" class="admin-vfilter px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-amber-500 text-white transition">
                             ⏳ Pendientes
                         </button>
-                        <button onclick="setAdminVideoFilter('all')" data-vfilter="all" class="admin-vfilter px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-100 transition">
-                            Todos los videos
+                        <button onclick="setAdminVideoFilter('active_all')" data-vfilter="active_all" class="admin-vfilter px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-100 transition">
+                            Videos activos
                         </button>
                         <button onclick="setAdminVideoFilter('reviewed')" data-vfilter="reviewed" class="admin-vfilter px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-100 transition">
                             ✅ Ya revisados
+                        </button>
+                        <button onclick="setAdminVideoFilter('history')" data-vfilter="history" class="admin-vfilter px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-100 transition">
+                            📜 Historial completo
                         </button>
                     </div>
                     <input type="text" id="admin-search" oninput="renderAdminVideos()" placeholder="Buscar por alumno, perro o ejercicio..." class="px-4 py-2 text-sm bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 sm:w-72">
@@ -385,28 +383,35 @@
                 </div>
             </section>
 
-            <!-- Sub-sección 3: Configuración Nube (Firebase) y Respaldo -->
+            <!-- Sub-sección 3: Configuración Google Drive (Apps Script) y Respaldo -->
             <section id="admin-section-settings" class="hidden space-y-5">
                 <div class="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm space-y-4">
-                    <h3 class="text-lg font-extrabold text-stone-800">☁️ Sincronización entre dispositivos (GitHub Pages + Firebase)</h3>
+                    <h3 class="text-lg font-extrabold text-stone-800">☁️ Conexión directa con tu Google Drive (5 TB) y Google Sheets</h3>
                     <p class="text-sm text-stone-600 leading-relaxed">
-                        Como GitHub Pages es un sitio estático, en <strong>Modo Local</strong> los datos se guardan únicamente en el navegador de cada dispositivo. Para que tus alumnos suban sus videos desde su casa y tú los revises desde tu computadora automáticamente, conecta una base de datos gratuita de <strong>Firebase Firestore</strong> pegando tu configuración en la constante <code class="bg-stone-100 px-1.5 py-0.5 rounded text-xs font-mono">FIREBASE_CONFIG</code> dentro de <code class="bg-stone-100 px-1.5 py-0.5 rounded text-xs font-mono">index.html</code> (o pruébalo primero aquí en este navegador).
+                        Conecta tu proyecto de <strong>Google Apps Script</strong> para que los alumnos suban sus videos directamente desde su celular a tu carpeta de Google Drive (<code class="bg-stone-100 px-1.5 py-0.5 rounded text-xs font-mono">VíCCAN - Videos por Revisar</code>), y tú puedas moverlos a <code class="bg-stone-100 px-1.5 py-0.5 rounded text-xs font-mono">VíCCAN - Respaldo Historial</code> o eliminarlos conservando el historial en Google Sheets.
                     </p>
-                    <div class="bg-stone-50 border border-stone-200 rounded-xl p-4 text-xs text-stone-700 space-y-1.5">
-                        <p class="font-bold text-stone-800">Pasos rápidos para activar Firebase gratis:</p>
-                        <ol class="list-decimal list-inside space-y-1">
-                            <li>Crea un proyecto gratis en <strong>console.firebase.google.com</strong>.</li>
-                            <li>Activa <strong>Firestore Database</strong> (en modo prueba o con reglas para <code class="bg-white px-1 rounded">viccan_users</code> y <code class="bg-white px-1 rounded">viccan_submissions</code>).</li>
-                            <li>En Configuración del proyecto &gt; Tus apps &gt; Web, copia el objeto <code class="bg-white px-1 rounded">firebaseConfig</code>.</li>
-                            <li>Pégalo en la línea <code class="bg-white px-1 rounded">const FIREBASE_CONFIG = { ... }</code> de este archivo antes de subirlo a GitHub.</li>
-                        </ol>
+                    <div class="bg-stone-50 border border-stone-200 rounded-xl p-4 text-xs text-stone-700 space-y-2">
+                        <p class="font-bold text-stone-800">Estado actual de conexión:</p>
+                        <p id="settings-drive-status" class="font-mono text-stone-600 break-all"></p>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-stone-500">Probar URL de Apps Script en este navegador (opcional):</label>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <input type="url" id="test-apps-script-url" placeholder="https://script.google.com/macros/s/.../exec" class="flex-1 px-3.5 py-2 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <button onclick="saveTestAppsScriptUrl()" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm px-4 py-2 rounded-xl transition">
+                                Conectar aquí
+                            </button>
+                        </div>
+                        <p class="text-xs text-stone-400">
+                            Para que funcione para todos tus alumnos en GitHub Pages, pega esa misma URL en la constante <code class="bg-stone-100 px-1 rounded">APPS_SCRIPT_URL</code> dentro de <code class="bg-stone-100 px-1 rounded">index.html</code> y súbelo a GitHub.
+                        </p>
                     </div>
                 </div>
 
                 <div class="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm space-y-4">
                     <h3 class="text-lg font-extrabold text-stone-800">💾 Respaldo manual (Exportar / Importar JSON)</h3>
                     <p class="text-sm text-stone-600">
-                        Descarga una copia de todos los alumnos, videos y retroalimentaciones, o importa un archivo de respaldo.
+                        Descarga una copia local de los registros, entregas y retroalimentaciones en formato JSON.
                     </p>
                     <div class="flex flex-wrap gap-3">
                         <button onclick="exportAllData()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition">
@@ -420,9 +425,9 @@
                 </div>
 
                 <div class="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm space-y-3">
-                    <h3 class="text-lg font-extrabold text-stone-800">🔑 Cambiar contraseña de Administrador</h3>
+                    <h3 class="text-lg font-extrabold text-stone-800">🔑 Hash SHA-256 (solo para Modo Local sin Apps Script)</h3>
                     <p class="text-sm text-stone-600">
-                        Escribe una nueva contraseña para generar su código seguro (hash SHA-256) y reemplaza <code class="bg-stone-100 px-1.5 py-0.5 rounded text-xs font-mono">ADMIN_PASSWORD_HASH</code> en el código de <code class="bg-stone-100 px-1.5 py-0.5 rounded text-xs font-mono">index.html</code> antes de subirlo a GitHub.
+                        Cuando usas Apps Script, la contraseña del entrenador se valida de forma privada en <code class="bg-stone-100 px-1 rounded">Code.gs</code> (no visible en GitHub). Si usas Modo Local, puedes generar un nuevo hash aquí:
                     </p>
                     <div class="flex flex-col sm:flex-row gap-2">
                         <input type="text" id="new-admin-pass-input" placeholder="Nueva contraseña deseada" class="flex-1 px-3.5 py-2 text-sm bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
@@ -458,7 +463,7 @@
                 </button>
             </div>
             <p class="text-sm text-stone-600">
-                Copia este resumen y envíamelo por WhatsApp o mensaje junto con tus videos grabados:
+                Copia este resumen y envíamelo por WhatsApp o mensaje:
             </p>
             <textarea id="summary-textarea" rows="8" readonly class="w-full p-4 text-sm bg-stone-50 border border-stone-200 rounded-2xl text-stone-700 font-mono focus:outline-none resize-none"></textarea>
             <div class="flex flex-col sm:flex-row gap-3 pt-2">
@@ -473,36 +478,59 @@
         </div>
     </div>
 
+    <!-- Modal de confirmación para eliminar video de Drive conservando historial -->
+    <div id="delete-confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-900/60 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-fade-in">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-xl shrink-0">
+                    🗑️
+                </div>
+                <div>
+                    <h3 class="text-lg font-extrabold text-stone-800">¿Eliminar archivo de video?</h3>
+                    <p id="delete-modal-subtitle" class="text-xs text-stone-500"></p>
+                </div>
+            </div>
+            <p class="text-sm text-stone-600 leading-relaxed">
+                El archivo de video se enviará a la papelera de tu Google Drive para liberar espacio, pero <strong>se conservará intacto todo el historial</strong> (alumno, ejercicio, fecha, nota y tu retroalimentación).
+            </p>
+            <div class="flex gap-3 pt-2">
+                <button onclick="closeDeleteModal()" class="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold py-2.5 px-4 rounded-xl transition">
+                    Cancelar
+                </button>
+                <button id="btn-confirm-delete-video" onclick="confirmDeleteVideo()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 px-4 rounded-xl transition shadow-sm">
+                    Sí, eliminar video
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         /**
          * =========================================================================
-         * CONFIGURACIÓN DE ADMINISTRADOR Y NUBE (FIREBASE)
+         * CONFIGURACIÓN DE GOOGLE DRIVE (APPS SCRIPT) Y ADMINISTRADOR
          * =========================================================================
-         * 1. Usuario Admin por defecto: "admin"
-         *    Contraseña Admin por defecto: "viccan2026"
-         *    (Puedes cambiar el hash desde la pestaña Admin -> Configuración -> Generar hash)
+         * 1. Pega aquí la URL de tu Web App de Google Apps Script (termina en /exec)
+         *    para activar la subida directa de videos a tu Google Drive y el historial
+         *    en Google Sheets para todos tus alumnos.
+         *    Si se deja vacío (""), la app funciona en Modo Local (este navegador).
+         */
+        const APPS_SCRIPT_URL = '';
+
+        /**
+         * 2. Credenciales de respaldo únicamente para Modo Local (cuando APPS_SCRIPT_URL
+         *    está vacío). Cuando usas Apps Script, la contraseña real se valida en Code.gs.
          */
         const ADMIN_USERNAME = 'admin';
         const ADMIN_PASSWORD_HASH = '598c8049245945e991e885d7554df7073b655ff2152b44b6734145d4274cc298';
 
-        /**
-         * 2. Configuración opcional de Firebase Firestore para sincronizar alumnos y videos
-         *    entre múltiples dispositivos al alojar en GitHub Pages.
-         *    Si dejas apiKey vacío (""), la app funcionará en Modo Local (localStorage).
-         */
-        const FIREBASE_CONFIG = {
-            apiKey: "",
-            authDomain: "",
-            projectId: "",
-            storageBucket: "",
-            messagingSenderId: "",
-            appId: ""
-        };
+        // Límite seguro de subida vía Apps Script (~35 MB por límite de carga de 50 MB en base64)
+        const MAX_DIRECT_UPLOAD_BYTES = 35 * 1024 * 1024;
 
         // Claves de almacenamiento local
         const LS_USERS_KEY = 'viccan_users_v1';
         const LS_SUBMISSIONS_KEY = 'viccan_submissions_v1';
         const LS_SESSION_KEY = 'viccan_session_v1';
+        const LS_OVERRIDE_SCRIPT_URL = 'viccan_apps_script_url';
 
         /**
          * Base de datos de ejercicios de entrenamiento canino en casa.
@@ -661,15 +689,14 @@
         ];
 
         // Estado global de la aplicación
-        let db = null; // Instancia de Firestore si está configurado
-        let isCloudMode = false;
-        let currentSession = null; // { role: 'student' | 'admin', userId, studentName, dogName, identifier }
-        let usersMap = {};         // { userId: userObj }
-        let submissionsMap = {};   // { `${userId}_${exerciseId}`: submissionObj }
+        let currentSession = null; // { role: 'student' | 'admin', userId, studentName, dogName, identifier, passwordHash, adminToken }
+        let usersMap = {};
+        let submissionsMap = {};
+        let pendingDeleteSubId = null;
 
         let activeCategory = 'Todos';
         let adminPreviewStudentView = false;
-        let adminVideoFilter = 'pending'; // 'pending' | 'all' | 'reviewed'
+        let adminVideoFilter = 'pending'; // 'pending' | 'active_all' | 'reviewed' | 'history'
         let adminCurrentSection = 'videos';
 
         // Estado del temporizador
@@ -679,14 +706,24 @@
         let isTimerRunning = false;
 
         /**
+         * Devuelve la URL activa de Google Apps Script (constante o de prueba local)
+         */
+        function getScriptUrl() {
+            const localOverride = localStorage.getItem(LS_OVERRIDE_SCRIPT_URL) || '';
+            return (APPS_SCRIPT_URL || localOverride || '').trim();
+        }
+
+        function isCloudDriveActive() {
+            return Boolean(getScriptUrl());
+        }
+
+        /**
          * Inicialización al cargar la página
          */
         document.addEventListener('DOMContentLoaded', async () => {
-            initCloudBackend();
             updateStorageIndicators();
             updateTimerDisplay();
 
-            // Restaurar sesión previa si existe
             try {
                 const savedSession = localStorage.getItem(LS_SESSION_KEY);
                 if (savedSession) {
@@ -701,37 +738,40 @@
             showAuthScreen();
         });
 
-        /**
-         * Inicializa Firebase Firestore si FIREBASE_CONFIG tiene datos válidos.
-         */
-        function initCloudBackend() {
-            if (FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId && typeof firebase !== 'undefined') {
-                try {
-                    if (!firebase.apps.length) {
-                        firebase.initializeApp(FIREBASE_CONFIG);
-                    }
-                    db = firebase.firestore();
-                    isCloudMode = true;
-                } catch (err) {
-                    console.error('Error al inicializar Firebase:', err);
-                    isCloudMode = false;
-                }
-            }
-        }
-
         function updateStorageIndicators() {
-            const label = isCloudMode ? 'Nube Firebase activa' : 'Modo Local (navegador)';
-            const dotClass = isCloudMode ? 'w-2 h-2 rounded-full bg-emerald-300' : 'w-2 h-2 rounded-full bg-amber-300';
+            const active = isCloudDriveActive();
+            const label = active ? 'Google Drive + Sheets activo' : 'Modo Local (navegador)';
+            const dotClass = active ? 'w-2 h-2 rounded-full bg-emerald-300' : 'w-2 h-2 rounded-full bg-amber-300';
             document.getElementById('auth-storage-label').textContent = label;
             document.getElementById('auth-storage-dot').className = dotClass;
-            document.getElementById('header-storage-pill').textContent = isCloudMode ? '☁️ Nube' : '💾 Local';
+            document.getElementById('header-storage-pill').textContent = active ? '☁️ Google Drive' : '💾 Local';
         }
 
         /**
          * =========================================================================
-         * CAPA DE DATOS (LOCALSTORAGE + FIRESTORE)
+         * COMUNICACIÓN CON GOOGLE APPS SCRIPT + RESPALDO LOCAL
          * =========================================================================
          */
+        async function callAppsScript(payload) {
+            const url = getScriptUrl();
+            if (!url) throw new Error('APPS_SCRIPT_URL no configurada');
+
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!resp.ok) {
+                throw new Error(`Error HTTP ${resp.status}`);
+            }
+            const data = await resp.json();
+            if (!data.ok) {
+                throw new Error(data.error || 'Error en el servidor de Google Drive');
+            }
+            return data;
+        }
+
         function getLocalMap(key) {
             try {
                 const raw = localStorage.getItem(key);
@@ -749,81 +789,38 @@
             }
         }
 
-        async function loadAllData() {
-            if (isCloudMode && db) {
-                try {
-                    const [usersSnap, subsSnap] = await Promise.all([
-                        db.collection('viccan_users').get(),
-                        db.collection('viccan_submissions').get()
-                    ]);
-                    const uMap = {};
-                    usersSnap.forEach(doc => { uMap[doc.id] = { id: doc.id, ...doc.data() }; });
-                    const sMap = {};
-                    subsSnap.forEach(doc => { sMap[doc.id] = { id: doc.id, ...doc.data() }; });
-                    usersMap = uMap;
-                    submissionsMap = sMap;
-                    return;
-                } catch (err) {
-                    console.error('Error leyendo Firestore, usando caché local:', err);
-                    showToast('No se pudo conectar con la nube; mostrando datos locales.', '⚠️');
-                }
+        async function loadAllAdminData() {
+            if (isCloudDriveActive()) {
+                const data = await callAppsScript({
+                    action: 'adminListAll',
+                    adminToken: currentSession.adminToken
+                });
+                const uMap = {};
+                (data.users || []).forEach(u => { uMap[u.id] = u; });
+                const sMap = {};
+                (data.submissions || []).forEach(s => { sMap[s.id] = s; });
+                usersMap = uMap;
+                submissionsMap = sMap;
+                return;
             }
             usersMap = getLocalMap(LS_USERS_KEY);
             submissionsMap = getLocalMap(LS_SUBMISSIONS_KEY);
         }
 
-        async function loadStudentData(userId) {
-            if (isCloudMode && db) {
-                try {
-                    const [userDoc, subsSnap] = await Promise.all([
-                        db.collection('viccan_users').doc(userId).get(),
-                        db.collection('viccan_submissions').where('userId', '==', userId).get()
-                    ]);
-                    if (userDoc.exists) {
-                        usersMap[userId] = { id: userDoc.id, ...userDoc.data() };
-                    }
-                    subsSnap.forEach(doc => {
-                        submissionsMap[doc.id] = { id: doc.id, ...doc.data() };
-                    });
-                    return;
-                } catch (err) {
-                    console.error('Error cargando datos del alumno:', err);
-                }
+        async function loadStudentSubmissions() {
+            if (isCloudDriveActive()) {
+                const data = await callAppsScript({
+                    action: 'getStudentSubmissions',
+                    userId: currentSession.userId,
+                    passwordHash: currentSession.passwordHash
+                });
+                const sMap = {};
+                (data.submissions || []).forEach(s => { sMap[s.id] = s; });
+                submissionsMap = sMap;
+                return;
             }
             usersMap = getLocalMap(LS_USERS_KEY);
             submissionsMap = getLocalMap(LS_SUBMISSIONS_KEY);
-        }
-
-        async function saveUserRecord(userObj) {
-            usersMap[userObj.id] = userObj;
-            setLocalMap(LS_USERS_KEY, usersMap);
-            if (isCloudMode && db) {
-                await db.collection('viccan_users').doc(userObj.id).set(userObj, { merge: true });
-            }
-        }
-
-        async function findUserByIdentifier(identifier) {
-            const norm = normalizeIdentifier(identifier);
-            if (isCloudMode && db) {
-                const snap = await db.collection('viccan_users').where('identifier', '==', norm).limit(1).get();
-                if (!snap.empty) {
-                    const doc = snap.docs[0];
-                    const data = { id: doc.id, ...doc.data() };
-                    usersMap[data.id] = data;
-                    return data;
-                }
-                return null;
-            }
-            const localUsers = getLocalMap(LS_USERS_KEY);
-            return Object.values(localUsers).find(u => u.identifier === norm) || null;
-        }
-
-        async function saveSubmissionRecord(subObj) {
-            submissionsMap[subObj.id] = subObj;
-            setLocalMap(LS_SUBMISSIONS_KEY, submissionsMap);
-            if (isCloudMode && db) {
-                await db.collection('viccan_submissions').doc(subObj.id).set(subObj, { merge: true });
-            }
         }
 
         /**
@@ -836,8 +833,7 @@
         }
 
         function switchAuthTab(tab) {
-            const tabs = ['login', 'register', 'admin'];
-            tabs.forEach(t => {
+            ['login', 'register', 'admin'].forEach(t => {
                 const btn = document.getElementById(`tab-${t}`);
                 const form = document.getElementById(`form-${t}`);
                 if (t === tab) {
@@ -867,33 +863,47 @@
             btn.textContent = 'Creando cuenta...';
 
             try {
-                const existing = await findUserByIdentifier(identifier);
-                if (existing) {
-                    showToast('Ese usuario/correo ya está registrado. Usa "Ingresar".', '⚠️');
-                    switchAuthTab('login');
-                    document.getElementById('login-identifier').value = identifier;
-                    return;
-                }
-
                 const passwordHash = await sha256(password);
-                const userId = 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-                const newUser = {
-                    id: userId,
-                    identifier,
-                    studentName,
-                    dogName,
-                    passwordHash,
-                    createdAt: new Date().toISOString()
-                };
+                let newUser = null;
 
-                await saveUserRecord(newUser);
+                if (isCloudDriveActive()) {
+                    const res = await callAppsScript({
+                        action: 'registerStudent',
+                        studentName,
+                        dogName,
+                        identifier,
+                        passwordHash
+                    });
+                    newUser = res.user;
+                } else {
+                    const localUsers = getLocalMap(LS_USERS_KEY);
+                    const existing = Object.values(localUsers).find(u => u.identifier === identifier);
+                    if (existing) {
+                        showToast('Ese usuario/correo ya está registrado. Usa "Ingresar".', '⚠️');
+                        switchAuthTab('login');
+                        document.getElementById('login-identifier').value = identifier;
+                        return;
+                    }
+                    newUser = {
+                        id: 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+                        identifier,
+                        studentName,
+                        dogName,
+                        passwordHash,
+                        createdAt: new Date().toISOString()
+                    };
+                    localUsers[newUser.id] = newUser;
+                    setLocalMap(LS_USERS_KEY, localUsers);
+                    usersMap = localUsers;
+                }
 
                 currentSession = {
                     role: 'student',
                     userId: newUser.id,
                     studentName: newUser.studentName,
                     dogName: newUser.dogName,
-                    identifier: newUser.identifier
+                    identifier: newUser.identifier,
+                    passwordHash
                 };
                 localStorage.setItem(LS_SESSION_KEY, JSON.stringify(currentSession));
                 document.getElementById('reg-password').value = '';
@@ -901,7 +911,7 @@
                 await enterApp();
             } catch (err) {
                 console.error(err);
-                showToast('Ocurrió un error al registrar la cuenta.', '❌');
+                showToast(err.message || 'Ocurrió un error al registrar la cuenta.', '❌');
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Crear cuenta y comenzar 🚀';
@@ -918,15 +928,26 @@
             btn.textContent = 'Verificando...';
 
             try {
-                const user = await findUserByIdentifier(identifier);
-                if (!user) {
-                    showToast('Usuario no encontrado. Regístrate en "Soy nuevo".', '⚠️');
-                    return;
-                }
                 const enteredHash = await sha256(password);
-                if (enteredHash !== user.passwordHash) {
-                    showToast('Contraseña incorrecta. Intenta de nuevo.', '🔒');
-                    return;
+                let user = null;
+
+                if (isCloudDriveActive()) {
+                    const res = await callAppsScript({
+                        action: 'loginStudent',
+                        identifier,
+                        passwordHash: enteredHash
+                    });
+                    user = res.user;
+                    const sMap = {};
+                    (res.submissions || []).forEach(s => { sMap[s.id] = s; });
+                    submissionsMap = sMap;
+                } else {
+                    const localUsers = getLocalMap(LS_USERS_KEY);
+                    user = Object.values(localUsers).find(u => u.identifier === identifier);
+                    if (!user) throw new Error('Usuario no encontrado. Regístrate en "Soy nuevo".');
+                    if (enteredHash !== user.passwordHash) throw new Error('Contraseña incorrecta.');
+                    usersMap = localUsers;
+                    submissionsMap = getLocalMap(LS_SUBMISSIONS_KEY);
                 }
 
                 currentSession = {
@@ -934,7 +955,8 @@
                     userId: user.id,
                     studentName: user.studentName,
                     dogName: user.dogName,
-                    identifier: user.identifier
+                    identifier: user.identifier,
+                    passwordHash: enteredHash
                 };
                 localStorage.setItem(LS_SESSION_KEY, JSON.stringify(currentSession));
                 document.getElementById('login-password').value = '';
@@ -942,7 +964,7 @@
                 await enterApp();
             } catch (err) {
                 console.error(err);
-                showToast('Error al iniciar sesión.', '❌');
+                showToast(err.message || 'Error al iniciar sesión.', '🔒');
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Entrar a mi rutina 🐾';
@@ -954,23 +976,61 @@
             const username = document.getElementById('admin-username').value.trim().toLowerCase();
             const password = document.getElementById('admin-password').value;
 
-            const enteredHash = await sha256(password);
-            if (username !== ADMIN_USERNAME || enteredHash !== ADMIN_PASSWORD_HASH) {
-                showToast('Credenciales de administrador incorrectas.', '🔒');
-                return;
-            }
+            const btn = document.getElementById('btn-admin-submit');
+            btn.disabled = true;
+            btn.textContent = 'Verificando...';
 
-            currentSession = {
-                role: 'admin',
-                userId: 'admin',
-                studentName: 'Entrenador VíCCAN',
-                dogName: '',
-                identifier: ADMIN_USERNAME
-            };
-            localStorage.setItem(LS_SESSION_KEY, JSON.stringify(currentSession));
-            document.getElementById('admin-password').value = '';
-            showToast('Sesión de administrador iniciada.', '🛡️');
-            await enterApp();
+            try {
+                if (isCloudDriveActive()) {
+                    const res = await callAppsScript({
+                        action: 'loginAdmin',
+                        username,
+                        password
+                    });
+                    const uMap = {};
+                    (res.users || []).forEach(u => { uMap[u.id] = u; });
+                    const sMap = {};
+                    (res.submissions || []).forEach(s => { sMap[s.id] = s; });
+                    usersMap = uMap;
+                    submissionsMap = sMap;
+
+                    currentSession = {
+                        role: 'admin',
+                        userId: 'admin',
+                        studentName: 'Entrenador VíCCAN',
+                        dogName: '',
+                        identifier: username,
+                        adminToken: res.adminToken
+                    };
+                } else {
+                    const enteredHash = await sha256(password);
+                    if (username !== ADMIN_USERNAME || enteredHash !== ADMIN_PASSWORD_HASH) {
+                        throw new Error('Credenciales de administrador incorrectas.');
+                    }
+                    usersMap = getLocalMap(LS_USERS_KEY);
+                    submissionsMap = getLocalMap(LS_SUBMISSIONS_KEY);
+
+                    currentSession = {
+                        role: 'admin',
+                        userId: 'admin',
+                        studentName: 'Entrenador VíCCAN',
+                        dogName: '',
+                        identifier: username,
+                        adminToken: 'local-admin'
+                    };
+                }
+
+                localStorage.setItem(LS_SESSION_KEY, JSON.stringify(currentSession));
+                document.getElementById('admin-password').value = '';
+                showToast('Sesión de administrador iniciada.', '🛡️');
+                await enterApp();
+            } catch (err) {
+                console.error(err);
+                showToast(err.message || 'Credenciales incorrectas.', '🔒');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Ingresar como Administrador 🛡️';
+            }
         }
 
         function logout() {
@@ -994,30 +1054,44 @@
             document.getElementById('app-shell').classList.add('flex');
 
             if (currentSession.role === 'admin') {
-                await loadAllData();
+                try {
+                    await loadAllAdminData();
+                } catch (err) {
+                    showToast(err.message || 'Sesión expirada. Inicia sesión de nuevo.', '⚠️');
+                    logout();
+                    return;
+                }
                 renderAppForAdmin();
             } else {
-                await loadStudentData(currentSession.userId);
+                try {
+                    await loadStudentSubmissions();
+                } catch (err) {
+                    console.warn(err);
+                }
                 renderAppForStudent();
             }
         }
 
         async function refreshAllData() {
             if (!currentSession) return;
-            if (currentSession.role === 'admin') {
-                await loadAllData();
-                renderAdminDashboard();
-            } else {
-                await loadStudentData(currentSession.userId);
-                renderExercises();
-                updateProgressUI();
+            try {
+                if (currentSession.role === 'admin') {
+                    await loadAllAdminData();
+                    renderAdminDashboard();
+                } else {
+                    await loadStudentSubmissions();
+                    renderExercises();
+                    updateProgressUI();
+                }
+                showToast('Datos actualizados.', '🔄');
+            } catch (err) {
+                showToast(err.message || 'No se pudo actualizar.', '⚠️');
             }
-            showToast('Datos actualizados.', '🔄');
         }
 
         /**
          * =========================================================================
-         * RENDERIZADO SEGÚN ROL (ALUMNO VS ADMINISTRADOR)
+         * RENDERIZADO SEGÚN ROL
          * =========================================================================
          */
         function renderAppForStudent() {
@@ -1029,7 +1103,7 @@
 
             document.getElementById('header-role-pill').textContent = 'VíCCAN • Rutina para días en casa';
             document.getElementById('header-title').textContent = 'Entrenamiento Canino en Casa';
-            document.getElementById('header-desc').textContent = '¿Hoy no pudieron salir? No importa. Elige 2 o 3 ejercicios, realiza sesiones cortas y divertidas, y pega el enlace de tu video para recibir retroalimentación.';
+            document.getElementById('header-desc').textContent = '¿Hoy no pudieron salir? No importa. Elige 2 o 3 ejercicios, realiza sesiones cortas y divertidas, y sube tu video directo desde tu celular para recibir retroalimentación.';
 
             document.getElementById('student-view').classList.remove('hidden');
             document.getElementById('admin-view').classList.add('hidden');
@@ -1043,7 +1117,7 @@
 
         function renderAppForAdmin() {
             document.getElementById('session-badge').textContent = '🛡️ Modo Entrenador (Administrador)';
-            document.getElementById('session-subtext').textContent = 'Panel de revisión y retroalimentación de videos';
+            document.getElementById('session-subtext').textContent = 'Panel de revisión en Google Drive y retroalimentación';
             const toggleBtn = document.getElementById('btn-toggle-admin-preview');
             toggleBtn.classList.remove('hidden');
 
@@ -1067,7 +1141,7 @@
 
                 document.getElementById('header-role-pill').textContent = 'VíCCAN • Panel de Entrenador';
                 document.getElementById('header-title').textContent = 'Retroalimentación de Videos';
-                document.getElementById('header-desc').textContent = 'Revisa los videos enviados por tus alumnos, evalúa su progreso y deja comentarios personalizados en cada ejercicio.';
+                document.getElementById('header-desc').textContent = 'Revisa los videos que suben tus alumnos, deja retroalimentación personalizada y decide si conservar el respaldo en Drive o eliminar el archivo manteniendo el historial.';
                 renderAdminDashboard();
             }
         }
@@ -1079,7 +1153,7 @@
 
         /**
          * =========================================================================
-         * LÓGICA DEL ALUMNO: EJERCICIOS, VIDEOS Y RETROALIMENTACIÓN
+         * LÓGICA DEL ALUMNO: SUBIDA DIRECTA DE VIDEO Y RETROALIMENTACIÓN
          * =========================================================================
          */
         function getSubmissionKey(userId, exerciseId) {
@@ -1102,11 +1176,26 @@
             localStorage.setItem(LS_SESSION_KEY, JSON.stringify(currentSession));
             document.getElementById('session-badge').textContent = `👤 ${studentName} · 🐶 ${dogName}`;
 
-            const existingUser = usersMap[currentSession.userId];
-            if (existingUser) {
-                existingUser.studentName = studentName;
-                existingUser.dogName = dogName;
-                await saveUserRecord(existingUser);
+            try {
+                if (isCloudDriveActive()) {
+                    await callAppsScript({
+                        action: 'saveProfile',
+                        userId: currentSession.userId,
+                        passwordHash: currentSession.passwordHash,
+                        studentName,
+                        dogName
+                    });
+                } else {
+                    const localUsers = getLocalMap(LS_USERS_KEY);
+                    if (localUsers[currentSession.userId]) {
+                        localUsers[currentSession.userId].studentName = studentName;
+                        localUsers[currentSession.userId].dogName = dogName;
+                        setLocalMap(LS_USERS_KEY, localUsers);
+                    }
+                }
+                showToast('Perfil actualizado.', '✓');
+            } catch (err) {
+                console.warn(err);
             }
         }
 
@@ -1167,14 +1256,14 @@
             grid.innerHTML = filtered.map(ex => {
                 const sub = getStudentSubmission(ex.id);
                 const isDone = Boolean(sub && sub.completed);
-                const hasVideo = Boolean(sub && sub.videoUrl);
+                const isDeleted = sub?.videoStatus === 'deleted';
+                const hasVideo = Boolean(sub && sub.videoUrl && !isDeleted);
                 const hasFeedback = Boolean(sub && sub.feedback && sub.feedback.comment);
                 const levelClass = getLevelBadgeClass(ex.level);
                 const ratingMeta = hasFeedback ? getFeedbackRatingMeta(sub.feedback.rating) : null;
 
                 return `
                     <article class="bg-white rounded-2xl border ${isDone ? 'border-emerald-400 ring-2 ring-emerald-100' : 'border-stone-200'} shadow-sm hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden">
-                        <!-- Cabecera de tarjeta -->
                         <div class="p-5 pb-4 border-b border-stone-100">
                             <div class="flex items-start justify-between gap-3 mb-2.5">
                                 <div class="flex flex-wrap items-center gap-2">
@@ -1206,7 +1295,6 @@
                             </p>
                         </div>
 
-                        <!-- Cuerpo de la tarjeta -->
                         <div class="p-5 space-y-4 flex-1 flex flex-col justify-between">
                             <div class="space-y-4">
                                 <div class="text-xs text-stone-600 bg-stone-50 px-3.5 py-2.5 rounded-xl flex items-center gap-2">
@@ -1236,21 +1324,43 @@
                                     </p>
                                 </div>
 
-                                <!-- Bloque de envío de video por parte del alumno -->
+                                <!-- Bloque de subida directa de video por parte del alumno -->
                                 <div class="bg-stone-50 border border-stone-200 rounded-xl p-3.5 space-y-2.5">
                                     <div class="flex items-center justify-between gap-2">
-                                        <span class="text-xs font-bold uppercase tracking-wider text-stone-600">📤 Tu video para revisión</span>
+                                        <span class="text-xs font-bold uppercase tracking-wider text-stone-600">📤 Subir tu video para revisión</span>
                                         ${hasVideo && isValidHttpUrl(sub.videoUrl) ? `
                                             <a href="${escapeHtml(sub.videoUrl)}" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-teal-700 hover:underline">
-                                                Ver enlace ↗
+                                                Ver video enviado ↗
                                             </a>
                                         ` : ''}
                                     </div>
-                                    <input type="url" id="video-url-${ex.id}" value="${escapeHtml(sub?.videoUrl || '')}" placeholder="Pega el link de tu video (Drive, YouTube, iCloud...)" class="w-full px-3 py-2 text-xs sm:text-sm bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+
+                                    ${isDeleted ? `
+                                        <p class="text-xs text-stone-500 bg-white border border-stone-200 rounded-lg px-3 py-2">
+                                            📦 Tu video anterior ya fue revisado y archivado en el historial del entrenador. Puedes subir uno nuevo si deseas otra revisión.
+                                        </p>
+                                    ` : ''}
+
+                                    <label class="flex items-center justify-center gap-2 w-full px-3 py-2.5 bg-white border-2 border-dashed border-teal-300 hover:border-teal-500 rounded-xl cursor-pointer text-xs sm:text-sm font-semibold text-teal-800 transition">
+                                        <span>📁 Elegir video del celular / PC (máx. 35 MB)</span>
+                                        <input type="file" id="video-file-${ex.id}" accept="video/*" onchange="onVideoFileSelected('${ex.id}')" class="hidden">
+                                    </label>
+                                    <p id="video-file-info-${ex.id}" class="text-xs text-stone-500 hidden"></p>
+
                                     <input type="text" id="video-note-${ex.id}" value="${escapeHtml(sub?.studentNote || '')}" placeholder="Nota opcional (ej. ¿cómo sentiste a tu perro?)" class="w-full px-3 py-2 text-xs sm:text-sm bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                                    <button type="button" onclick="submitExerciseVideo('${ex.id}')" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs sm:text-sm py-2 px-3 rounded-lg transition">
-                                        ${hasVideo ? 'Actualizar video y nota' : 'Guardar video y marcar listo'}
+
+                                    <button type="button" id="btn-upload-${ex.id}" onclick="submitExerciseVideo('${ex.id}')" class="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white font-semibold text-xs sm:text-sm py-2.5 px-3 rounded-lg transition">
+                                        ${hasVideo ? '⬆️ Reemplazar video y guardar nota' : '⬆️ Subir video a revisión'}
                                     </button>
+
+                                    <div class="pt-1">
+                                        <button type="button" onclick="toggleExternalUrlBox('${ex.id}')" class="text-[11px] font-semibold text-stone-500 hover:text-teal-700 underline">
+                                            ¿Tu video pesa más de 35 MB? Pegar enlace externo
+                                        </button>
+                                        <div id="external-url-box-${ex.id}" class="hidden mt-2">
+                                            <input type="url" id="video-url-${ex.id}" value="${sub?.videoStatus === 'external' ? escapeHtml(sub?.videoUrl || '') : ''}" placeholder="https://drive.google.com/... o YouTube" class="w-full px-3 py-2 text-xs bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Retroalimentación del Entrenador -->
@@ -1270,7 +1380,6 @@
                                 ` : ''}
                             </div>
 
-                            <!-- Botón de Completado -->
                             <div class="pt-2">
                                 <button onclick="toggleComplete('${ex.id}')" class="w-full py-3 px-4 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 active:scale-[0.98] ${
                                     isDone
@@ -1289,43 +1398,126 @@
             }).join('');
         }
 
+        function toggleExternalUrlBox(exerciseId) {
+            const box = document.getElementById(`external-url-box-${exerciseId}`);
+            if (box) box.classList.toggle('hidden');
+        }
+
+        function onVideoFileSelected(exerciseId) {
+            const input = document.getElementById(`video-file-${exerciseId}`);
+            const info = document.getElementById(`video-file-info-${exerciseId}`);
+            const file = input?.files?.[0];
+            if (!file || !info) return;
+
+            const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+            info.classList.remove('hidden');
+            if (file.size > MAX_DIRECT_UPLOAD_BYTES) {
+                info.className = 'text-xs text-rose-600 font-semibold';
+                info.textContent = `⚠️ ${file.name} pesa ${sizeMb} MB (el máximo directo es 35 MB). Recórtalo a 30-60 seg o pega un enlace abajo.`;
+            } else {
+                info.className = 'text-xs text-emerald-700 font-semibold';
+                info.textContent = `✅ Seleccionado: ${file.name} (${sizeMb} MB). Pulsa "Subir video a revisión".`;
+            }
+        }
+
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const result = String(reader.result || '');
+                    const commaIdx = result.indexOf(',');
+                    resolve(commaIdx >= 0 ? result.slice(commaIdx + 1) : result);
+                };
+                reader.onerror = () => reject(new Error('No se pudo leer el archivo de video.'));
+                reader.readAsDataURL(file);
+            });
+        }
+
         async function submitExerciseVideo(exerciseId) {
             if (!currentSession) return;
-            const urlInput = document.getElementById(`video-url-${exerciseId}`).value.trim();
+            const fileInput = document.getElementById(`video-file-${exerciseId}`);
+            const urlInput = (document.getElementById(`video-url-${exerciseId}`)?.value || '').trim();
             const noteInput = document.getElementById(`video-note-${exerciseId}`).value.trim();
+            const file = fileInput?.files?.[0] || null;
 
-            if (!urlInput) {
-                showToast('Pega primero el enlace de tu video (Drive, YouTube, etc.).', '⚠️');
+            if (!file && !urlInput) {
+                showToast('Selecciona un archivo de video o pega un enlace externo.', '⚠️');
                 return;
             }
-            if (!isValidHttpUrl(urlInput)) {
+            if (file && file.size > MAX_DIRECT_UPLOAD_BYTES) {
+                showToast('El video supera los 35 MB. Recórtalo a 30-60 s o pega un enlace.', '⚠️');
+                return;
+            }
+            if (!file && urlInput && !isValidHttpUrl(urlInput)) {
                 showToast('El enlace debe empezar con https:// o http://', '⚠️');
                 return;
             }
 
+            const btn = document.getElementById(`btn-upload-${exerciseId}`);
             const ex = exercises.find(item => item.id === exerciseId);
             const subId = getSubmissionKey(currentSession.userId, exerciseId);
-            const existing = submissionsMap[subId] || {};
 
-            const subObj = {
-                ...existing,
-                id: subId,
-                userId: currentSession.userId,
-                studentName: currentSession.studentName,
-                dogName: currentSession.dogName,
-                exerciseId: ex.id,
-                exerciseTitle: ex.title,
-                category: ex.category,
-                completed: true,
-                videoUrl: urlInput,
-                studentNote: noteInput,
-                submittedAt: new Date().toISOString()
-            };
+            btn.disabled = true;
+            btn.textContent = file ? '⏳ Subiendo video a Drive (no cierres)...' : '⏳ Guardando enlace...';
 
-            await saveSubmissionRecord(subObj);
-            renderExercises();
-            updateProgressUI();
-            showToast('¡Video guardado para revisión del entrenador!', '🎥');
+            try {
+                if (isCloudDriveActive()) {
+                    const payload = {
+                        action: 'uploadVideoAndSave',
+                        userId: currentSession.userId,
+                        passwordHash: currentSession.passwordHash,
+                        exerciseId: ex.id,
+                        exerciseTitle: ex.title,
+                        category: ex.category,
+                        studentNote: noteInput
+                    };
+
+                    if (file) {
+                        payload.fileName = file.name;
+                        payload.mimeType = file.type || 'video/mp4';
+                        payload.base64Data = await readFileAsBase64(file);
+                    } else {
+                        payload.externalUrl = urlInput;
+                    }
+
+                    const res = await callAppsScript(payload);
+                    submissionsMap[subId] = res.submission;
+                } else {
+                    // Modo local de demostración (guarda metadata o ObjectURL temporal en sesión)
+                    const existing = submissionsMap[subId] || {};
+                    let localUrl = urlInput;
+                    if (file) {
+                        localUrl = URL.createObjectURL(file);
+                    }
+                    const subObj = {
+                        ...existing,
+                        id: subId,
+                        userId: currentSession.userId,
+                        studentName: currentSession.studentName,
+                        dogName: currentSession.dogName,
+                        exerciseId: ex.id,
+                        exerciseTitle: ex.title,
+                        category: ex.category,
+                        completed: true,
+                        videoUrl: localUrl,
+                        videoStatus: file ? 'active' : 'external',
+                        studentNote: noteInput,
+                        submittedAt: new Date().toISOString(),
+                        deletedAt: ''
+                    };
+                    submissionsMap[subId] = subObj;
+                    setLocalMap(LS_SUBMISSIONS_KEY, submissionsMap);
+                }
+
+                renderExercises();
+                updateProgressUI();
+                showToast('¡Video guardado correctamente para revisión!', '🎥');
+            } catch (err) {
+                console.error(err);
+                showToast(err.message || 'No se pudo subir el video.', '❌');
+                btn.disabled = false;
+                btn.textContent = '⬆️ Subir video a revisión';
+            }
         }
 
         async function toggleComplete(exerciseId) {
@@ -1341,21 +1533,35 @@
                 exerciseTitle: ex.title,
                 category: ex.category
             };
-
             const nextDone = !existing.completed;
-            existing.completed = nextDone;
-            existing.studentName = currentSession.studentName;
-            existing.dogName = currentSession.dogName;
-            if (nextDone && !existing.submittedAt) {
-                existing.submittedAt = new Date().toISOString();
-            }
 
-            await saveSubmissionRecord(existing);
-            if (nextDone) {
-                showToast('¡Excelente trabajo! Ejercicio marcado como listo.', '🎉');
+            try {
+                if (isCloudDriveActive()) {
+                    const res = await callAppsScript({
+                        action: 'toggleComplete',
+                        userId: currentSession.userId,
+                        passwordHash: currentSession.passwordHash,
+                        exerciseId: ex.id,
+                        exerciseTitle: ex.title,
+                        category: ex.category,
+                        completed: nextDone
+                    });
+                    submissionsMap[subId] = res.submission;
+                } else {
+                    existing.completed = nextDone;
+                    existing.studentName = currentSession.studentName;
+                    existing.dogName = currentSession.dogName;
+                    if (nextDone && !existing.submittedAt) existing.submittedAt = new Date().toISOString();
+                    submissionsMap[subId] = existing;
+                    setLocalMap(LS_SUBMISSIONS_KEY, submissionsMap);
+                }
+
+                if (nextDone) showToast('¡Excelente trabajo! Ejercicio marcado como listo.', '🎉');
+                renderExercises();
+                updateProgressUI();
+            } catch (err) {
+                showToast(err.message || 'No se pudo actualizar.', '⚠️');
             }
-            renderExercises();
-            updateProgressUI();
         }
 
         function updateProgressUI() {
@@ -1379,8 +1585,21 @@
                 const subId = getSubmissionKey(currentSession.userId, ex.id);
                 const sub = submissionsMap[subId];
                 if (sub && sub.completed) {
-                    sub.completed = false;
-                    await saveSubmissionRecord(sub);
+                    if (isCloudDriveActive()) {
+                        const res = await callAppsScript({
+                            action: 'toggleComplete',
+                            userId: currentSession.userId,
+                            passwordHash: currentSession.passwordHash,
+                            exerciseId: ex.id,
+                            exerciseTitle: ex.title,
+                            category: ex.category,
+                            completed: false
+                        });
+                        submissionsMap[subId] = res.submission;
+                    } else {
+                        sub.completed = false;
+                        setLocalMap(LS_SUBMISSIONS_KEY, submissionsMap);
+                    }
                     changed = true;
                 }
             }
@@ -1395,25 +1614,27 @@
 
         /**
          * =========================================================================
-         * PANEL DE ADMINISTRADOR (RETROALIMENTACIÓN DE VIDEOS)
+         * PANEL DE ADMINISTRADOR (RETROALIMENTACIÓN + RESPUESTA EN GOOGLE DRIVE)
          * =========================================================================
          */
         function renderAdminDashboard() {
             const students = Object.values(usersMap);
             const allSubs = Object.values(submissionsMap);
-            const videoSubs = allSubs.filter(s => s.videoUrl && isValidHttpUrl(s.videoUrl));
-            const reviewedSubs = videoSubs.filter(s => s.feedback && s.feedback.comment);
-            const pendingSubs = videoSubs.filter(s => !(s.feedback && s.feedback.comment));
+            const withActiveVideo = allSubs.filter(s => s.videoUrl && s.videoStatus !== 'deleted');
+            const reviewedAll = allSubs.filter(s => s.feedback && s.feedback.comment);
+            const pending = withActiveVideo.filter(s => !(s.feedback && s.feedback.comment));
 
             document.getElementById('stat-students').textContent = students.length;
-            document.getElementById('stat-videos').textContent = videoSubs.length;
-            document.getElementById('stat-pending').textContent = pendingSubs.length;
-            document.getElementById('stat-reviewed').textContent = reviewedSubs.length;
+            document.getElementById('stat-videos').textContent = withActiveVideo.length;
+            document.getElementById('stat-pending').textContent = pending.length;
+            document.getElementById('stat-reviewed').textContent = reviewedAll.length;
 
             if (adminCurrentSection === 'videos') {
                 renderAdminVideos();
             } else if (adminCurrentSection === 'students') {
                 renderAdminStudents();
+            } else if (adminCurrentSection === 'settings') {
+                renderAdminSettings();
             }
         }
 
@@ -1448,14 +1669,31 @@
             renderAdminVideos();
         }
 
+        function getDriveStatusBadge(sub) {
+            if (sub.videoStatus === 'deleted') {
+                return '<span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-stone-200 text-stone-700">🗑️ Video eliminado (Historial)</span>';
+            }
+            if (sub.videoStatus === 'archived') {
+                return '<span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-800">📦 Respaldado en Drive</span>';
+            }
+            if (sub.videoStatus === 'external') {
+                return '<span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-sky-100 text-sky-800">🔗 Enlace externo</span>';
+            }
+            return '<span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-teal-50 text-teal-800">📁 En Drive (Por revisar)</span>';
+        }
+
         function renderAdminVideos() {
             const container = document.getElementById('admin-videos-list');
             const query = (document.getElementById('admin-search').value || '').trim().toLowerCase();
 
-            let list = Object.values(submissionsMap).filter(s => s.videoUrl && isValidHttpUrl(s.videoUrl));
+            let list = Object.values(submissionsMap).filter(s =>
+                (s.videoUrl && (isValidHttpUrl(s.videoUrl) || String(s.videoUrl).startsWith('blob:'))) || s.videoStatus === 'deleted' || (s.feedback && s.feedback.comment)
+            );
 
             if (adminVideoFilter === 'pending') {
-                list = list.filter(s => !(s.feedback && s.feedback.comment));
+                list = list.filter(s => s.videoUrl && s.videoStatus !== 'deleted' && !(s.feedback && s.feedback.comment));
+            } else if (adminVideoFilter === 'active_all') {
+                list = list.filter(s => s.videoUrl && s.videoStatus !== 'deleted');
             } else if (adminVideoFilter === 'reviewed') {
                 list = list.filter(s => Boolean(s.feedback && s.feedback.comment));
             }
@@ -1468,15 +1706,14 @@
                 );
             }
 
-            // Más recientes primero
             list.sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0));
 
             if (list.length === 0) {
                 container.innerHTML = `
                     <div class="bg-white border border-stone-200 rounded-2xl p-8 text-center text-stone-500 space-y-2">
                         <div class="text-3xl">🎬</div>
-                        <p class="font-bold text-stone-700">No hay videos en esta vista</p>
-                        <p class="text-sm">Cuando los alumnos peguen el enlace de sus videos en los ejercicios, aparecerán aquí para que los evalúes.</p>
+                        <p class="font-bold text-stone-700">No hay registros en esta vista</p>
+                        <p class="text-sm">Cuando los alumnos suban sus videos desde su celular, aparecerán aquí para que los revises.</p>
                     </div>
                 `;
                 return;
@@ -1484,18 +1721,20 @@
 
             container.innerHTML = list.map(sub => {
                 const hasFeedback = Boolean(sub.feedback && sub.feedback.comment);
+                const isDeleted = sub.videoStatus === 'deleted';
                 const currentRating = sub.feedback?.rating || 'excellent';
-                const embedHtml = buildVideoPreviewHtml(sub.videoUrl, sub.id);
+                const embedHtml = (!isDeleted && sub.videoUrl) ? buildVideoPreviewHtml(sub.videoUrl, sub.id) : '';
 
                 return `
                     <article class="bg-white border ${hasFeedback ? 'border-emerald-300' : 'border-amber-300'} rounded-2xl p-5 shadow-sm space-y-4">
                         <div class="flex flex-wrap items-start justify-between gap-3 border-b border-stone-100 pb-3">
                             <div>
-                                <div class="flex flex-wrap items-center gap-2 mb-1">
+                                <div class="flex flex-wrap items-center gap-2 mb-1.5">
                                     <span class="text-xs font-bold px-2.5 py-1 rounded-lg ${hasFeedback ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
                                         ${hasFeedback ? '✅ Revisado' : '⏳ Pendiente de revisión'}
                                     </span>
-                                    <span class="text-xs font-medium px-2.5 py-1 rounded-lg bg-teal-50 text-teal-700">
+                                    ${getDriveStatusBadge(sub)}
+                                    <span class="text-xs font-medium px-2.5 py-1 rounded-lg bg-stone-100 text-stone-700">
                                         ${escapeHtml(sub.category || '')}
                                     </span>
                                     <span class="text-xs text-stone-400">
@@ -1509,9 +1748,11 @@
                                     👤 <strong>${escapeHtml(sub.studentName || 'Alumno')}</strong> · 🐶 <strong>${escapeHtml(sub.dogName || 'Perro')}</strong>
                                 </p>
                             </div>
-                            <a href="${escapeHtml(sub.videoUrl)}" target="_blank" rel="noopener noreferrer" class="bg-stone-900 hover:bg-stone-800 text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-xl transition shrink-0">
-                                🎥 Abrir video ↗
-                            </a>
+                            ${(!isDeleted && sub.videoUrl && isValidHttpUrl(sub.videoUrl)) ? `
+                                <a href="${escapeHtml(sub.videoUrl)}" target="_blank" rel="noopener noreferrer" class="bg-stone-900 hover:bg-stone-800 text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-xl transition shrink-0">
+                                    🎥 Abrir video ↗
+                                </a>
+                            ` : ''}
                         </div>
 
                         ${sub.studentNote ? `
@@ -1521,8 +1762,13 @@
                             </div>
                         ` : ''}
 
-                        <!-- Reproductor / Previsualización si es compatible -->
                         ${embedHtml}
+
+                        ${isDeleted ? `
+                            <div class="bg-stone-100 border border-stone-200 rounded-xl p-3 text-xs text-stone-600">
+                                Archivo de video eliminado de Google Drive el ${formatDate(sub.deletedAt)}. El historial y tu retroalimentación permanecen guardados.
+                            </div>
+                        ` : ''}
 
                         <!-- Formulario de Retroalimentación -->
                         <div class="bg-stone-50 border border-stone-200 rounded-xl p-4 space-y-3">
@@ -1537,8 +1783,21 @@
                                 </select>
                             </div>
                             <textarea id="fb-comment-${sub.id}" rows="3" placeholder="Escribe qué hizo bien, qué ajustar en su timing/premios o el siguiente paso..." class="w-full p-3 text-sm bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">${escapeHtml(sub.feedback?.comment || '')}</textarea>
-                            <div class="flex justify-end">
-                                <button onclick="saveAdminFeedback('${sub.id}')" class="bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-sm px-5 py-2.5 rounded-xl transition shadow-sm">
+
+                            <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+                                <div class="flex flex-wrap gap-2">
+                                    ${(!isDeleted && sub.driveFileId && sub.videoStatus !== 'archived') ? `
+                                        <button type="button" onclick="archiveVideoInDrive('${sub.id}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 font-semibold text-xs px-3 py-2 rounded-xl transition">
+                                            📦 Mover a Respaldo (Drive)
+                                        </button>
+                                    ` : ''}
+                                    ${(!isDeleted && sub.videoUrl) ? `
+                                        <button type="button" onclick="openDeleteModal('${sub.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold text-xs px-3 py-2 rounded-xl transition">
+                                            🗑️ Eliminar video (conservar historial)
+                                        </button>
+                                    ` : ''}
+                                </div>
+                                <button onclick="saveAdminFeedback('${sub.id}')" class="bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-sm px-5 py-2.5 rounded-xl transition shadow-sm ml-auto">
                                     ${hasFeedback ? 'Actualizar retroalimentación ✅' : 'Guardar retroalimentación ✅'}
                                 </button>
                             </div>
@@ -1549,6 +1808,21 @@
         }
 
         function buildVideoPreviewHtml(url, subId) {
+            const driveMatch = url.match(/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/);
+            if (driveMatch) {
+                const fileId = driveMatch[1];
+                return `
+                    <div class="space-y-2">
+                        <button type="button" onclick="toggleEmbed('embed-${subId}')" class="text-xs font-bold text-teal-700 hover:underline">
+                            ▶ Ver reproductor de Google Drive aquí
+                        </button>
+                        <div id="embed-${subId}" class="hidden aspect-video w-full rounded-xl overflow-hidden bg-stone-900">
+                            <iframe class="w-full h-full" src="https://drive.google.com/file/d/${escapeHtml(fileId)}/preview" allow="autoplay"></iframe>
+                        </div>
+                    </div>
+                `;
+            }
+
             const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
             if (ytMatch) {
                 const videoId = ytMatch[1];
@@ -1564,22 +1838,7 @@
                 `;
             }
 
-            const driveMatch = url.match(/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/);
-            if (driveMatch) {
-                const fileId = driveMatch[1];
-                return `
-                    <div class="space-y-2">
-                        <button type="button" onclick="toggleEmbed('embed-${subId}')" class="text-xs font-bold text-teal-700 hover:underline">
-                            ▶ Previsualizar video de Google Drive aquí
-                        </button>
-                        <div id="embed-${subId}" class="hidden aspect-video w-full rounded-xl overflow-hidden bg-stone-900">
-                            <iframe class="w-full h-full" src="https://drive.google.com/file/d/${escapeHtml(fileId)}/preview" allow="autoplay"></iframe>
-                        </div>
-                    </div>
-                `;
-            }
-
-            if (/\.(mp4|webm|mov)(\?.*)?$/i.test(url)) {
+            if (/\.(mp4|webm|mov)(\?.*)?$/i.test(url) || url.startsWith('blob:')) {
                 return `
                     <video controls class="w-full max-h-80 rounded-xl bg-black">
                         <source src="${escapeHtml(url)}">
@@ -1601,22 +1860,112 @@
 
             const rating = document.getElementById(`fb-rating-${subId}`).value;
             const comment = document.getElementById(`fb-comment-${subId}`).value.trim();
-
             if (!comment) {
                 showToast('Escribe un comentario de retroalimentación antes de guardar.', '⚠️');
                 return;
             }
 
-            sub.feedback = {
-                rating,
-                comment,
-                updatedAt: new Date().toISOString(),
-                trainerName: 'Entrenador VíCCAN'
-            };
+            try {
+                if (isCloudDriveActive()) {
+                    const res = await callAppsScript({
+                        action: 'saveFeedback',
+                        adminToken: currentSession.adminToken,
+                        submissionId: subId,
+                        rating,
+                        comment
+                    });
+                    submissionsMap[subId] = res.submission;
+                } else {
+                    sub.feedback = {
+                        rating,
+                        comment,
+                        updatedAt: new Date().toISOString(),
+                        trainerName: 'Entrenador VíCCAN'
+                    };
+                    setLocalMap(LS_SUBMISSIONS_KEY, submissionsMap);
+                }
 
-            await saveSubmissionRecord(sub);
-            renderAdminDashboard();
-            showToast(`Retroalimentación guardada para ${sub.studentName}.`, '✅');
+                renderAdminDashboard();
+                showToast(`Retroalimentación guardada para ${sub.studentName}.`, '✅');
+            } catch (err) {
+                showToast(err.message || 'No se pudo guardar la retroalimentación.', '❌');
+            }
+        }
+
+        async function archiveVideoInDrive(subId) {
+            const sub = submissionsMap[subId];
+            if (!sub) return;
+            try {
+                if (isCloudDriveActive()) {
+                    const res = await callAppsScript({
+                        action: 'manageVideoDrive',
+                        adminToken: currentSession.adminToken,
+                        submissionId: subId,
+                        operation: 'archive'
+                    });
+                    submissionsMap[subId] = res.submission;
+                } else {
+                    sub.videoStatus = 'archived';
+                    setLocalMap(LS_SUBMISSIONS_KEY, submissionsMap);
+                }
+                renderAdminDashboard();
+                showToast('Video movido a la carpeta "VíCCAN - Respaldo Historial".', '📦');
+            } catch (err) {
+                showToast(err.message || 'No se pudo respaldar el video.', '❌');
+            }
+        }
+
+        function openDeleteModal(subId) {
+            const sub = submissionsMap[subId];
+            if (!sub) return;
+            pendingDeleteSubId = subId;
+            document.getElementById('delete-modal-subtitle').textContent = `${sub.studentName} (${sub.dogName}) · ${sub.exerciseTitle}`;
+            const modal = document.getElementById('delete-confirm-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeDeleteModal() {
+            pendingDeleteSubId = null;
+            const modal = document.getElementById('delete-confirm-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        async function confirmDeleteVideo() {
+            const subId = pendingDeleteSubId;
+            if (!subId) return;
+            const btn = document.getElementById('btn-confirm-delete-video');
+            btn.disabled = true;
+            btn.textContent = 'Eliminando...';
+
+            try {
+                if (isCloudDriveActive()) {
+                    const res = await callAppsScript({
+                        action: 'manageVideoDrive',
+                        adminToken: currentSession.adminToken,
+                        submissionId: subId,
+                        operation: 'delete'
+                    });
+                    submissionsMap[subId] = res.submission;
+                } else {
+                    const sub = submissionsMap[subId];
+                    if (sub) {
+                        sub.videoStatus = 'deleted';
+                        sub.videoUrl = '';
+                        sub.deletedAt = new Date().toISOString();
+                        setLocalMap(LS_SUBMISSIONS_KEY, submissionsMap);
+                    }
+                }
+                closeDeleteModal();
+                renderAdminDashboard();
+                showToast('Video eliminado de Drive. El historial se conservó intacto.', '🗑️');
+            } catch (err) {
+                showToast(err.message || 'No se pudo eliminar el video.', '❌');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Sí, eliminar video';
+            }
         }
 
         function renderAdminStudents() {
@@ -1635,7 +1984,7 @@
             container.innerHTML = students.map(u => {
                 const userSubs = Object.values(submissionsMap).filter(s => s.userId === u.id);
                 const completedCount = userSubs.filter(s => s.completed).length;
-                const videosCount = userSubs.filter(s => s.videoUrl && isValidHttpUrl(s.videoUrl)).length;
+                const videosCount = userSubs.filter(s => s.videoUrl && s.videoStatus !== 'deleted').length;
                 const reviewedCount = userSubs.filter(s => s.feedback && s.feedback.comment).length;
 
                 return `
@@ -1652,10 +2001,10 @@
                             <p class="text-xs text-stone-400 mt-1">Usuario: ${escapeHtml(u.identifier)}</p>
                         </div>
                         <div class="flex items-center justify-between text-xs text-stone-600 bg-stone-50 px-3.5 py-2.5 rounded-xl">
-                            <span>🎥 Videos: <strong>${videosCount}</strong></span>
+                            <span>🎥 Videos activos: <strong>${videosCount}</strong></span>
                             <span>✅ Revisados: <strong>${reviewedCount}</strong></span>
                             <button onclick="filterVideosByStudent('${escapeHtml(u.id)}')" class="font-bold text-teal-700 hover:underline">
-                                Ver videos →
+                                Ver historial →
                             </button>
                         </div>
                     </div>
@@ -1666,14 +2015,38 @@
         function filterVideosByStudent(userId) {
             const name = usersMap[userId]?.studentName || '';
             setAdminSection('videos');
-            setAdminVideoFilter('all');
+            setAdminVideoFilter('history');
             document.getElementById('admin-search').value = name;
             renderAdminVideos();
         }
 
-        /**
-         * Herramientas de Respaldo y Hash para Admin
-         */
+        function renderAdminSettings() {
+            const url = getScriptUrl();
+            const statusEl = document.getElementById('settings-drive-status');
+            const inputEl = document.getElementById('test-apps-script-url');
+            statusEl.textContent = url ? `✅ Conectado a: ${url}` : '⚠️ Modo Local (sin URL de Apps Script configurada todavía).';
+            if (inputEl && !inputEl.value && url) inputEl.value = url;
+        }
+
+        function saveTestAppsScriptUrl() {
+            const val = document.getElementById('test-apps-script-url').value.trim();
+            if (!val) {
+                localStorage.removeItem(LS_OVERRIDE_SCRIPT_URL);
+                updateStorageIndicators();
+                renderAdminSettings();
+                showToast('URL limpiada (Modo Local).', 'ℹ️');
+                return;
+            }
+            if (!isValidHttpUrl(val)) {
+                showToast('La URL debe empezar con https://', '⚠️');
+                return;
+            }
+            localStorage.setItem(LS_OVERRIDE_SCRIPT_URL, val);
+            updateStorageIndicators();
+            renderAdminSettings();
+            showToast('URL guardada en este navegador. Cierra sesión e ingresa para conectar.', '☁️');
+        }
+
         function exportAllData() {
             const payload = {
                 exportedAt: new Date().toISOString(),
@@ -1694,21 +2067,19 @@
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = async (ev) => {
+            reader.onload = (ev) => {
                 try {
                     const data = JSON.parse(ev.target.result);
                     if (data.users) {
-                        for (const u of Object.values(data.users)) {
-                            await saveUserRecord(u);
-                        }
+                        usersMap = { ...usersMap, ...data.users };
+                        setLocalMap(LS_USERS_KEY, usersMap);
                     }
                     if (data.submissions) {
-                        for (const s of Object.values(data.submissions)) {
-                            await saveSubmissionRecord(s);
-                        }
+                        submissionsMap = { ...submissionsMap, ...data.submissions };
+                        setLocalMap(LS_SUBMISSIONS_KEY, submissionsMap);
                     }
                     renderAdminDashboard();
-                    showToast('Respaldo importado correctamente.', '✅');
+                    showToast('Respaldo importado en Modo Local.', '✅');
                 } catch (err) {
                     console.error(err);
                     showToast('El archivo JSON no tiene el formato válido.', '❌');
@@ -1745,9 +2116,7 @@
             if (isTimerRunning) {
                 stopTimer();
             } else {
-                if (timerSeconds <= 0) {
-                    timerSeconds = initialTimerSeconds;
-                }
+                if (timerSeconds <= 0) timerSeconds = initialTimerSeconds;
                 isTimerRunning = true;
                 const btn = document.getElementById('timer-toggle-btn');
                 btn.textContent = 'Pausar';
@@ -1817,7 +2186,7 @@
                 doneList.forEach((ex, i) => {
                     const sub = getStudentSubmission(ex.id);
                     text += `${i + 1}. ${ex.title} (${ex.category})\n`;
-                    if (sub?.videoUrl) {
+                    if (sub?.videoUrl && sub.videoStatus !== 'deleted' && !sub.videoUrl.startsWith('blob:')) {
                         text += `   🎥 Video: ${sub.videoUrl}\n`;
                     }
                 });
@@ -1844,7 +2213,7 @@
             try {
                 const successful = document.execCommand('copy');
                 if (successful) {
-                    showToast('¡Reporte copiado! Pégalo en tu chat junto con tus videos.', '📋');
+                    showToast('¡Reporte copiado! Pégalo en tu chat.', '📋');
                     closeSummaryModal();
                 } else {
                     showToast('Selecciona el texto y cópialo manualmente.', '⚠️');
@@ -1904,12 +2273,9 @@
             toastTimeout = setTimeout(() => {
                 container.classList.remove('opacity-100', 'translate-y-0');
                 container.classList.add('opacity-0', 'translate-y-4');
-            }, 3200);
+            }, 3400);
         }
 
-        /**
-         * SHA-256 con Web Crypto API y respaldo puro en JS para entornos file://
-         */
         async function sha256(message) {
             if (window.crypto && window.crypto.subtle) {
                 const msgBuffer = new TextEncoder().encode(message);
@@ -1921,7 +2287,6 @@
         }
 
         function sha256Fallback(ascii) {
-            // Codificar UTF-8 a bytes ASCII-safe
             const str = unescape(encodeURIComponent(ascii));
             function rightRotate(value, amount) {
                 return (value >>> amount) | (value << (32 - amount));
@@ -1940,9 +2305,7 @@
             const isComposite = {};
             for (let candidate = 2; primeCounter < 64; candidate++) {
                 if (!isComposite[candidate]) {
-                    for (i = 0; i < 313; i += candidate) {
-                        isComposite[i] = candidate;
-                    }
+                    for (i = 0; i < 313; i += candidate) isComposite[i] = candidate;
                     hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
                     k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
                 }
@@ -1982,9 +2345,7 @@
                     workingHash[4] = (workingHash[4] + temp1) | 0;
                     workingHash.pop();
                 }
-                for (i = 0; i < 8; i++) {
-                    workingHash[i] = (workingHash[i] + oldHash[i]) | 0;
-                }
+                for (i = 0; i < 8; i++) workingHash[i] = (workingHash[i] + oldHash[i]) | 0;
             }
 
             for (i = 0; i < 8; i++) {
